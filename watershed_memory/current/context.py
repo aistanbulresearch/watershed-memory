@@ -192,6 +192,9 @@ def _load_context(
     case = rows.case_row(db, case_id)
     config = _case_config(case)
     if reserved_revision is None:
+        from .field_presence import require_legacy_context
+
+        require_legacy_context(db, case_id)
         rows.check_time(case, evaluated)
     elif reserved_revision > case["revision"] or timestamp(case["created_at"]) > evaluated:
         raise ValueError("reserved context predates its case or exceeds the current revision")
