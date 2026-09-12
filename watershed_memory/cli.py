@@ -7,7 +7,7 @@ from pathlib import Path
 import uvicorn
 
 from .api import create_app
-from .budget import BoundedPlanner
+from .persistent_budget import PersistentBudgetPlanner
 from .planning import ReplayPlanner
 from .service import Service
 
@@ -24,7 +24,10 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--runtime-arn")
     command.add_argument("--runtime-endpoint")
     command.add_argument("--runtime-version")
-    command.add_argument("--live-turn-limit", type=int, default=6)
+    command.add_argument("--live-turn-limit", type=int, default=6,
+                         help="Durable maximum attempts for this database and budget scope (1-12).")
+    command.add_argument("--live-budget-scope", default="local-live-demo-v1",
+                         help="Explicit allowance identity; restarting keeps the same used count.")
     return command
 
 
@@ -45,6 +48,8 @@ def configured_planner(args, account_lookup=aws_account):
         raise ValueError("Live mode requires an explicit model, region and expected AWS account.")
     if not 1 <= args.live_turn_limit <= 12:
         raise ValueError("Choose a live-turn allowance from 1 to 12.")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}", args.live_budget_scope):
+        raise ValueError("Use a budget scope of 1-64 ASCII letters, digits, underscores or hyphens.")
     if args.provider == "agentcore" and not all((args.runtime_arn, args.runtime_endpoint, args.runtime_version)):
         raise ValueError("AgentCore requires a Runtime ARN, named endpoint and expected version.")
     if account_lookup(args.profile, args.region) != args.expected_account:
@@ -57,7 +62,8 @@ def configured_planner(args, account_lookup=aws_account):
         selected = AgentCoreClient(args.runtime_arn, args.runtime_endpoint, args.region,
             expected_account=args.expected_account, expected_version=args.runtime_version,
             model_id=args.model_id, profile=args.profile)
-    return BoundedPlanner(selected, args.live_turn_limit)
+    return PersistentBudgetPlanner(selected, args.database, args.live_budget_scope,
+                                   args.live_turn_limit)
 
 
 def main() -> None:
