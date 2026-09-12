@@ -6,6 +6,8 @@ An agent's recommendation becomes useful when the team can act on it and find it
 
 The current delivery journal records an invocation before the model is contacted. That reservation binds the case revision, source interval, coverage policy, relevant earlier measurements and exact model/instruction/SDK profile. New measurements arriving during inference cannot replace the evidence used to validate the result.
 
+An optional [latest-source snapshot](CURRENT_SOURCE_HEALTH.md) also binds the station's newest readings. It separates the age of an older reviewed interval from current source freshness and preserves the same readings through decision replay.
+
 The delivery journal checks the returned decision by replaying its recorded tool work against that reserved context. It then saves each new review or evidence link and marks the source interval delivered in one database transaction. An explicit no-follow-up decision is saved too. A failure at any write boundary rolls the transaction back.
 
 If a person changes the plan while the agent is working, the returned result is held as stale. The saved human plan takes precedence. If the process stops before a result is recorded, the reservation remains visible for deliberate reconciliation. Restarting or creating another case does not reset the shared invocation allowance.

@@ -30,6 +30,7 @@ from .delivery_types import (
 )
 from .fact_validation import event_id as validate_event_id
 from .fact_validation import timestamp, utc
+from .health_schema import ensure_schema as ensure_health_schema
 from .strands import CurrentExecution, CurrentFailure
 from .tools import _json, validate_assessment
 
@@ -140,18 +141,20 @@ class DeliveryStore:
         profile: InvocationProfile,
         source_delivery: bool,
         now: datetime,
+        include_source_health: bool = False,
     ) -> DeliveryReservation | DeliveryReceipt:
         _identifier(case_id, "case_id")
         _identifier(request_id, "request_id")
         validate_event_id(event_id)
         now = utc(now)
-        if type(profile) is not InvocationProfile or type(source_delivery) is not bool:
+        if (type(profile) is not InvocationProfile or type(source_delivery) is not bool
+            or type(include_source_health) is not bool):
             raise ValueError("invalid delivery request")
         profile_json = _encoded(profile, limit=2048)
-        encoded = _encoded(
-            {"event_id": event_id, "profile": profile, "source_delivery": source_delivery},
-            limit=4096,
-        )
+        request = {"event_id": event_id, "profile": profile, "source_delivery": source_delivery}
+        if include_source_health:
+            request["include_source_health"] = True
+        encoded = _encoded(request, limit=4096)
         with self.cases._connect() as db:
             db.execute("BEGIN IMMEDIATE")
             existing = db.execute(
@@ -174,7 +177,8 @@ class DeliveryStore:
             ).fetchone()
             if held is not None:
                 raise DeliveryHeld("case has an unresolved invocation")
-            context = _load_context(db, case_id, event_id, evaluated_at=now)
+            context = _load_context(db, case_id, event_id, evaluated_at=now,
+                include_source_health=include_source_health)
             if profile.mode == "SCRIPTED_SDK" and not context.simulated:
                 raise ValueError("scripted invocation requires an explicitly simulated case")
             monitor = context.current.monitor_id
@@ -230,6 +234,11 @@ class DeliveryStore:
                     now.isoformat(),
                 ),
             )
+            if include_source_health:
+                ensure_health_schema(db, create=True)
+                db.execute("INSERT INTO health_attempts VALUES(?,?)", (
+                    identity, _encoded(context.source_health.version_ids, limit=512),
+                ))
             return DeliveryReservation(identity, request_id, profile, source_delivery, context, now)
 
     def commit(
@@ -251,6 +260,19 @@ class DeliveryStore:
             if attempt["status"] != "RESERVED":
                 raise DeliveryHeld("attempt is held or reconciled and cannot accept this result")
             case = _time(db, attempt, now)
+            request = json.loads(attempt["input_json"])
+            include_health = request.get("include_source_health", False)
+            if type(include_health) is not bool:
+                raise ValueError("invalid reserved source-health mode")
+            source_pins = None
+            if include_health:
+                ensure_health_schema(db)
+                health_row = db.execute(
+                    "SELECT version_ids_json FROM health_attempts WHERE attempt_id=?", (attempt_id,)
+                ).fetchone()
+                if health_row is None:
+                    raise ValueError("missing reserved source-health references")
+                source_pins = tuple(json.loads(health_row[0]))
             context = _load_context(
                 db,
                 attempt["case_id"],
@@ -262,6 +284,8 @@ class DeliveryStore:
                     for item in json.loads(attempt["review_refs_json"])
                 ),
                 reserved_revision=attempt["case_revision"],
+                include_source_health=include_health,
+                source_version_ids=source_pins,
             )
             if rows.digest(_json(context)) != attempt["context_digest64"]:
                 raise WorkflowConflict("reserved context differs from trusted source replay")

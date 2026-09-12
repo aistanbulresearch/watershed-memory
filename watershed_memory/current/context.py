@@ -10,6 +10,7 @@ import json
 import sqlite3
 from dataclasses import asdict, dataclass
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from ..watch.store import WatchEvent, WatchStore
 from . import case_records as rows
@@ -20,6 +21,9 @@ from .fact_validation import event_id as validate_event_id
 from .fact_validation import timestamp, utc
 from .facts import compare_intervals, inspect_interval
 from .registry import SourceRegistry, gallinas_registry
+
+if TYPE_CHECKING:
+    from .source_health import SourceHealth
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +38,7 @@ class CurrentContext:
     reviews: tuple[ReviewRecord, ...]
     review_evidence: tuple[tuple[str, tuple[str, ...]], ...]
     registry: SourceRegistry
+    source_health: SourceHealth | None = None
 
     def __post_init__(self):
         _identifier(self.case_id, "case_id")
@@ -46,6 +51,22 @@ class CurrentContext:
         if type(self.registry) is not SourceRegistry:
             raise ValueError("invalid source registry")
         registered = self.registry.get(self.current.source_id)
+        if self.source_health is not None:
+            from .source_health import SourceHealth
+
+            health = self.source_health
+            if type(health) is not SourceHealth or (
+                health.case_id, health.monitor_id, health.source_id,
+                health.station_id, health.evaluated_at,
+            ) != (
+                self.case_id, self.current.monitor_id, self.current.source_id,
+                self.current.station_id, evaluated,
+            ) or rows.digest(rows.encode(asdict(health.policy))) != self.policy_digest:
+                raise ValueError("source health differs from the reserved case context")
+            if tuple((s.series_id, s.parameter_code, s.unit) for s in health.series) != tuple(
+                (s.series_id, s.parameter_code, s.unit) for s in registered.series
+            ):
+                raise ValueError("source health differs from registered series")
         if (
             registered.station_id != self.current.station_id
             or self.current.interval_end > evaluated
@@ -120,12 +141,14 @@ def _case_config(case: sqlite3.Row) -> CaseConfig:
 
 
 def load_context(
-    store: CaseStore, case_id: str, event_id: str, *, evaluated_at: datetime
+    store: CaseStore, case_id: str, event_id: str, *, evaluated_at: datetime,
+    include_source_health: bool = False,
 ) -> CurrentContext:
     """Load exact registered evidence and at most three relevant prior intervals."""
     with store._connect() as db:
         db.execute("BEGIN")
-        return _load_context(db, case_id, event_id, evaluated_at=evaluated_at)
+        return _load_context(db, case_id, event_id, evaluated_at=evaluated_at,
+            include_source_health=include_source_health)
 
 
 def _load_context(
@@ -137,10 +160,18 @@ def _load_context(
     prior_event_ids: tuple[str, ...] | None = None,
     review_refs: tuple[tuple[str, int, tuple[str, ...]], ...] | None = None,
     reserved_revision: int | None = None,
+    include_source_health: bool = False,
+    source_version_ids: tuple[int | None, ...] | None = None,
 ) -> CurrentContext:
     """Reconstruct a trusted snapshot inside the caller's transaction."""
     if not db.in_transaction:
         raise ValueError("context loading requires a caller transaction")
+    if type(include_source_health) is not bool or (
+        source_version_ids is not None and not include_source_health
+    ):
+        raise ValueError("invalid source health inclusion")
+    if reserved_revision is not None and include_source_health and source_version_ids is None:
+        raise ValueError("reserved source health requires exact version references")
     _identifier(case_id, "case_id")
     validate_event_id(event_id)
     evaluated = utc(evaluated_at)
@@ -284,6 +315,12 @@ def _load_context(
         identity not in allowlist for ids in links.values() for identity in ids
     ):
         raise ValueError("reserved work evidence is outside the original context")
+    health = None
+    if include_source_health:
+        from .source_health import _load_source_health
+
+        health = _load_source_health(db, case_id, evaluated_at=evaluated,
+            version_ids=source_version_ids)
     return CurrentContext(
         case_id,
         case["revision"] if reserved_revision is None else reserved_revision,
@@ -298,6 +335,7 @@ def _load_context(
             for task_id, ids in links.items()
         ),
         registry,
+        health,
     )
 
 

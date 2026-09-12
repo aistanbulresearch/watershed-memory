@@ -23,6 +23,7 @@ from .fact_validation import event_id as validate_event_id
 from .tools import CurrentTools, validate_assessment
 
 INSTRUCTION_VERSION = "watershed-current-v1"
+HEALTH_INSTRUCTION_VERSION = "watershed-current-v2"
 SYSTEM_PROMPT = """You are Watershed Memory, assisting a source-water operator in a
 wildfire-affected watershed. Review one sealed current observation interval in a continuing
 case. Source-origin case and work case are distinct: simulated work has no operational
@@ -55,6 +56,19 @@ within30 days of evaluated_at. NO_FOLLOW_UP requires null kind, target, title an
 Reasons must briefly connect measurements, their exact source/time and relevant human plan
 to the decision. Correct a rejected argument if needed within the tool budget.
 After staging, finish briefly. Staging is not a committed change; the service saves it later.
+"""
+
+HEALTH_INSTRUCTIONS = """
+This case includes a separately reserved latest-station snapshot. After get_case_context
+and inspect_current_series, read inspect_source_health before staging any decision.
+The selected sealed interval may be older than the station's latest measurements.
+Use the selected interval to describe what happened then; use inspect_source_health
+to describe the station's latest observed values and their freshness at evaluated_at.
+Age of an older queued interval does not mean current publishing has stopped. Missing
+interval coverage remains an evidence gap even when newer measurements are present.
+An original retrieval/publication time is provenance, not a substitute for measured time.
+NULL latest readings cannot be replaced with earlier numeric values. Distinguish absence,
+age and NULL values in the proposed work. This tool reads pinned evidence; it does not fetch.
 """
 
 
@@ -209,6 +223,8 @@ class CurrentStrandsPlanner:
         budget = TurnBudget(self.max_calls, self.seconds)
         mode = "SCRIPTED_SDK" if self.scripted_test else "STRANDS_CURRENT"
         sdk_version = version("strands-agents")
+        health_enabled = context.source_health is not None
+        instruction_version = HEALTH_INSTRUCTION_VERSION if health_enabled else INSTRUCTION_VERSION
         agent = None
 
         async def invoke():
@@ -222,7 +238,7 @@ class CurrentStrandsPlanner:
         try:
             agent = Agent(
                 model=self.model,
-                system_prompt=SYSTEM_PROMPT,
+                system_prompt=SYSTEM_PROMPT + (HEALTH_INSTRUCTIONS if health_enabled else ""),
                 tools=[
                     tool(evidence.get_case_context),
                     tool(evidence.inspect_current_series),
@@ -230,7 +246,7 @@ class CurrentStrandsPlanner:
                     tool(evidence.find_relevant_reviews),
                     tool(evidence.inspect_alternate_sources),
                     tool(evidence.stage_assessment),
-                ],
+                ] + ([tool(evidence.inspect_source_health)] if health_enabled else []),
                 hooks=[budget],
                 callback_handler=None,
                 retry_strategy=None,
@@ -246,7 +262,7 @@ class CurrentStrandsPlanner:
                 assessment,
                 mode,
                 self.model_id,
-                INSTRUCTION_VERSION,
+                instruction_version,
                 sdk_version,
                 budget.calls,
                 evidence.attempts,
@@ -263,7 +279,7 @@ class CurrentStrandsPlanner:
                 context.current.event_id,
                 mode,
                 self.model_id,
-                INSTRUCTION_VERSION,
+                instruction_version,
                 sdk_version,
                 budget.calls,
                 evidence.attempts,

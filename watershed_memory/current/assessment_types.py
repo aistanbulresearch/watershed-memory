@@ -17,6 +17,7 @@ _TOOLS = frozenset(
         "compare_prior_event",
         "find_relevant_reviews",
         "inspect_alternate_sources",
+        "inspect_source_health",
         "stage_assessment",
     }
 )

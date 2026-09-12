@@ -23,7 +23,11 @@ def _plain(value: Any) -> Any:
     if isinstance(value, datetime):
         return value.astimezone(timezone.utc).isoformat()
     if is_dataclass(value):
-        return _plain(asdict(value))
+        result = asdict(value)
+        if type(value) is CurrentContext and value.source_health is None:
+            # Preserve accepted v1 reserved digests and receipts exactly.
+            result.pop("source_health")
+        return _plain(result)
     if isinstance(value, dict):
         return {str(key): _plain(item) for key, item in value.items()}
     if isinstance(value, (tuple, list)):
@@ -173,6 +177,21 @@ class CurrentTools:
             "comparison": _plain(asdict(comparison)),
         }
 
+    @_tool("inspect_source_health")
+    def inspect_source_health(self) -> dict[str, Any]:
+        """Read pinned latest station measurements, separate from the reviewed interval."""
+        self._require_read()
+        health = self.context.source_health
+        if health is None:
+            raise ValueError("source health was not reserved for this context")
+        return {
+            **_plain(health),
+            "evidence_class": "CURRENT_USGS_OBSERVATION",
+            "missing_parameters": list(health.missing_parameters),
+            "stale_parameters": list(health.stale_parameters),
+            "null_parameters": list(health.null_parameters),
+        }
+
     @_tool("find_relevant_reviews")
     def find_relevant_reviews(self, kind: str) -> dict[str, Any]:
         """Read the active operator plan for one supported review kind."""
@@ -241,6 +260,10 @@ class CurrentTools:
             reference_ids: Prior event IDs already compared by this instance.
         """
         self._require_read()
+        if self.context.source_health is not None and not any(
+            item.name == "inspect_source_health" for item in self._trace
+        ):
+            raise ValueError("reserved latest source health must be read before staging")
         if event_id != self.context.current.event_id or type(reference_ids) is not list:
             raise ValueError("assessment identity or references differ")
         if any(item not in self._compared for item in reference_ids):
@@ -257,10 +280,12 @@ class CurrentTools:
                 if existing is None or target_task_id != existing.task_id:
                     raise ValueError("target is not the active review")
             if kind == "COVERAGE_REVIEW":
-                if (
-                    self.context.current.interval_coverage == "SUFFICIENT"
-                    and self.context.current.freshness == "FRESH"
-                ):
+                health = self.context.source_health
+                gap = self.context.current.interval_coverage != "SUFFICIENT"
+                gap = gap or (self.context.current.freshness != "FRESH" if health is None else bool(
+                    health.missing_parameters or health.stale_parameters or health.null_parameters
+                ))
+                if not gap:
                     raise ValueError("complete fresh data has no coverage gap")
             if kind == "OBSERVATION_REVIEW":
                 if not any(item.latest_value is not None for item in self.context.current.series):
@@ -320,6 +345,7 @@ def validate_assessment(
                     "compare_prior_event",
                     "find_relevant_reviews",
                     "inspect_alternate_sources",
+                    "inspect_source_health",
                     "stage_assessment",
                 }
                 or type(arguments) is not dict
