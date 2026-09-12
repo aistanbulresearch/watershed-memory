@@ -46,10 +46,17 @@ Publication timestamps can exceed request admission by at most 60 seconds to acc
 
 ## Inspect the implementation
 
+Before a current observation reaches a decision, the facts layer checks its source, time window, units and revision. It answers two separate questions: **Do we have the required measurements for this interval? How recent are those measurements?** A complete interval can still contain stale evidence. A later valid sample can restore the latest value after an earlier missing measurement.
+
+Comparisons retain the exact measured values and signed change, with a clearly defined current/previous ratio. Corrected intervals carry their explicit revision relationship. Alternate-source lookup returns only sources with an approved, variable-specific compatibility link; the initial Gallinas registry contains one source.
+
+The current facts layer runs locally without model calls. Its integration tests exercise the complete adapter → SQLite → reopened evidence → facts path.
+
 - [Source adapter](../watershed_memory/watch/usgs.py) and [immutable records](../watershed_memory/watch/observations.py)
 - [Transactional store](../watershed_memory/watch/store.py), [relational schema](../watershed_memory/watch/store_schema.py) and [revision ingestion](../watershed_memory/watch/store_ingest.py)
 - [Bounded event construction](../watershed_memory/watch/store_events.py) and [batch validation](../watershed_memory/watch/store_validation.py)
 - [Autonomous runner](../watershed_memory/watch/runner.py) and [command line](../watershed_memory/watch/__main__.py)
+- [Current evidence facts](../watershed_memory/current/facts.py), [source registry](../watershed_memory/current/registry.py) and [source-to-facts tests](../tests/test_current_source_pipeline.py)
 - [Source tests](../tests/test_live_sources.py), [durability and growth tests](../tests/test_watch_store.py), [runner tests](../tests/test_watch_runner.py) and [process/CLI tests](../tests/test_watch_cli.py)
 
 The tests include 10,000 accumulated observations, a 2,000-event pending queue, actual SQLite failure injection, concurrent lease claims, late and corrected evidence, source-provenance checks, and separate-process persistence.
