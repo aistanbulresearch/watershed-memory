@@ -45,6 +45,12 @@ The Strands integration exposes three bounded tools: read saved case context, re
 
 **AgentCore runs the agent. The case carries the memory.** The verified cloud run uses two separate Runtime sessions: August continues the same review; September preserves its acknowledgment and opens a separate evidence-gap review. Both repeated requests return saved receipts without another invocation. The case restores identically in a fresh process. [Inspect the verified run](docs/VERIFIED_RUN.md) · [Explore the Runtime boundary](docs/AGENTCORE.md).
 
+### Keep collecting while the operator is away
+
+The current-observation collector checks official USGS rain, flow and turbidity on a saved schedule. It catches late publications within a configured lookback, preserves corrections and queues evidence for case assessment. Restarting keeps the same observations and pending work. **[Run the continuous watch](docs/CONTINUOUS_WATCH.md).**
+
+This current collector performs acquisition without model calls. The browser and cloud walkthrough above demonstrate the separate verified historical agent journey.
+
 ### Engineering worth opening
 
 - **One enduring case:** observations, reviews and operator responses stay connected across restarts.
@@ -53,6 +59,7 @@ The Strands integration exposes three bounded tools: read saved case context, re
 - **Execution claims:** concurrent duplicate requests share one planner execution, with a durable claim and replayable receipt.
 - **A durable live allowance:** server restarts preserve the attempt counter; failures consume capacity and saved receipts do not.
 - **Evidence checks:** unreleased observations are unavailable to tools; recorded results are checked against case and source packets.
+- **Continuous acquisition:** bounded source reads, revision-linked evidence, exclusive poll leases and an indexed durable event queue.
 - **An operator experience:** accessible actions, saved responses, contextual next steps, and evidence/trace panels on demand.
 
 [Architecture](docs/ARCHITECTURE.md) · [Implementation and checks](docs/ENGINEERING.md) · [Interactive hosting](docs/HOSTING.md) · [Source attribution](THIRD_PARTY_NOTICES.md)
@@ -66,7 +73,7 @@ uv run ruff check watershed_memory tests runtime deployment feasibility/run_stra
 python -m unittest discover -s feasibility -p "test_*.py"
 ```
 
-**209 Python tests** cover the HTTP journey, isolation, failure atomicity, adversarial planner output, request claims, Strands/AgentCore protocols, public evidence export, invocation limits through concurrency and process death, and explicit web exposure with private-metadata filtering. JavaScript request-state checks cover recovery after a lost response. The original proof remains reproducible, with **21 tests and 11 checks across eight fresh processes**. [Original replay guide](feasibility/README.md).
+The Python suite covers the HTTP journey, isolation, failure atomicity, adversarial planner output, request claims, Strands/AgentCore protocols, public evidence export, durable invocation limits and explicit web exposure. Continuous-watch checks add source validation, corrections, restart recovery, 10,000-observation history and a 2,000-event queue. JavaScript request-state checks cover recovery after a lost response. The original proof remains reproducible, with **21 tests and 11 checks across eight fresh processes**. [Original replay guide](feasibility/README.md).
 
 ### License
 
