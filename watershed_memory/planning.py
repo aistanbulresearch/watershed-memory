@@ -29,6 +29,17 @@ class Planner(Protocol):
     def plan(self, state: dict, released: list[dict]) -> Plan: ...
 
 
+def project_case(state: dict) -> dict:
+    """Expose review state while keeping free-text operator notes in the case ledger."""
+    response_fields = ("task_id", "action", "recorded_at", "simulated")
+    return {
+        "case": deepcopy(state["case"]),
+        "tasks": deepcopy(state["tasks"]),
+        "responses": [{key: deepcopy(response[key]) for key in response_fields}
+                      for response in state["responses"]],
+    }
+
+
 class EvidenceTools:
     """A per-turn capability: no arbitrary paths, URLs, SQL or operator actions."""
 
@@ -49,9 +60,7 @@ class EvidenceTools:
         """Read saved reviews, their evidence links and demonstration operator responses."""
         self._context_read = True
         return self._record("get_case_context", {}, {
-            "case": deepcopy(self._state["case"]),
-            "tasks": deepcopy(self._state["tasks"]),
-            "responses": deepcopy(self._state["responses"]),
+            **project_case(self._state),
             "released_event_ids": list(self._released),
             "current_event_id": self._current["event_id"],
         })
@@ -65,13 +74,19 @@ class EvidenceTools:
                             deepcopy(self._released[event_id]))
 
     def propose_review(self, kind: str, event_id: str, reason: str,
-                       existing_task_id: str | None = None) -> dict:
+                       existing_task_id: str | None) -> dict:
         """Propose a permitted review; link unfinished work or create new work after completion.
 
         This stages an action for validation. It does not modify saved state. Kind must be
         MONITORING_REVIEW or EVIDENCE_GAP_REVIEW and evidence must be the current window.
-        Supply the exact existing_task_id from saved context for unfinished work; omit it
-        only when no unfinished review of this kind exists and new work is warranted.
+        The target is always explicit. OPEN and ACKNOWLEDGED reviews are unfinished.
+
+        Args:
+            kind: MONITORING_REVIEW or EVIDENCE_GAP_REVIEW.
+            event_id: The current_event_id returned by get_case_context.
+            reason: A short factual reason grounded in the retrieved observations.
+            existing_task_id: Exact saved task ID for an OPEN or ACKNOWLEDGED review of
+                this kind. Send JSON null only when no unfinished review of this kind exists.
         """
         if not self._context_read or event_id not in self._read:
             raise ValueError("Read case context and the supporting observations first.")
@@ -89,8 +104,10 @@ class EvidenceTools:
                            if t["kind"] == kind and t["status"] != "COMPLETED"), None)
         expected_target = unfinished["id"] if unfinished else None
         if existing_task_id != expected_target:
-            raise ValueError("Select the matching unfinished task from context, or omit the "
-                             "target only when this kind has no unfinished review.")
+            if unfinished:
+                raise ValueError(f"Set existing_task_id to {expected_target!r} for this "
+                                 f"{unfinished['status']} {kind}. ACKNOWLEDGED is unfinished work.")
+            raise ValueError("Set existing_task_id to JSON null: this kind has no unfinished review.")
         proposal = {"kind": kind, "event_id": event_id, "reason": reason.strip(),
                     "existing_task_id": existing_task_id}
         self.proposals.append(proposal)

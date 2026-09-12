@@ -9,7 +9,7 @@ from watershed_memory.service import Service
 
 @pytest.fixture
 def client(tmp_path):
-    with TestClient(create_app(Service(tmp_path / "http.sqlite"))) as instance:
+    with TestClient(create_app(Service(tmp_path / "http.sqlite")), base_url="http://127.0.0.1") as instance:
         yield instance
 
 
@@ -48,3 +48,30 @@ def test_only_packaged_interface_is_served(client):
         assert client.get(private).status_code == 404
     assert "frame-ancestors 'none'" in client.get("/").headers["content-security-policy"]
     assert client.get("/api/health").headers["cache-control"] == "no-store"
+
+
+@pytest.mark.parametrize("remote", [False, True])
+def test_agent_failure_is_actionable_without_exposing_remote_details(tmp_path, remote):
+    from watershed_memory.agentcore_client import AgentCoreTurnError
+    from watershed_memory.planning import ReplayPlanner
+    from watershed_memory.strands_agent import AgentTurnError
+
+    class FailedAgent(ReplayPlanner):
+        def plan(self, state, released):
+            if remote:
+                raise AgentCoreTurnError({"error_code": "RuntimeClientError", "private": "secret-canary"})
+            raise AgentTurnError("secret-canary", [], {}, 8)
+
+    service = Service(tmp_path / "failure.sqlite")
+    state = service.create_session()
+    state = service.advance(state["session_id"], "july")
+    state = service.respond(state["session_id"], "ack", state["tasks"][0]["id"],
+                            "acknowledge", "Demonstration review remains assigned.")
+    service.planner = FailedAgent()
+    with TestClient(create_app(service), base_url="http://127.0.0.1") as client:
+        response = client.post(f"/api/sessions/{state['session_id']}/advance",
+                               json={"request_id": "failed-august"})
+        assert response.status_code == 503
+        assert "saved case is unchanged" in response.json()["detail"]
+        assert "secret-canary" not in response.text
+        assert service.snapshot(state["session_id"]) == state

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Three storms. One memory. Follow a real Strands and AgentCore run that keeps source-water evidence and unfinished reviews connected.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Watershed Memory · Three storms. One memory.</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#journey">Skip to the recorded case</a>
+  <header class="top">
+    <a class="brand" href="./" aria-label="Watershed Memory home"><b aria-hidden="true">≈</b><span>WATERSHED<br><i>MEMORY</i></span></a>
+    <span class="top-note">RECORDED AGENTCORE EXECUTION</span>
+  </header>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">FOR THE TEAM PROTECTING A DRINKING-WATER SOURCE</p>
+      <h1>Three storms.<br><em>One memory.</em></h1>
+      <p class="lede">After wildfire, the next storm can bring ash and debris into a water supply. The team’s work must carry forward with every new observation.</p>
+      <p class="hero-purpose">Watershed Memory connects new evidence to unfinished reviews, flags missing station evidence, and keeps the operator’s response with the case.</p>
+      <div class="hero-actions">
+        <a class="button primary" href="#journey">Watch the verified cloud run <span aria-hidden="true">↘</span></a>
+        <a class="button quiet" href="https://github.com/aistanbulresearch/watershed-memory/blob/main/docs/AGENTCORE.md">Inspect the engineering ↗</a>
+      </div>
+      <p class="badge">Recorded AgentCore execution · historical 2022 observations</p>
+    </section>
+    <section class="journey" id="journey" aria-labelledby="journey-heading">
+      <div class="section-head">
+        <div><p class="eyebrow">GALLINAS, NEW MEXICO / FOUR RECORDED MOMENTS</p><h2 id="journey-heading">Watch the work stay connected.</h2></div>
+        <nav class="nav" aria-label="Move through the recorded run">
+          <button id="back" aria-label="Previous moment" disabled>←</button>
+          <span id="step-count">1 / 4</span>
+          <button id="next" aria-label="Next moment" disabled>→</button>
+        </nav>
+      </div>
+      <div class="step-tabs" id="step-tabs" aria-label="Recorded moments"></div>
+      <div class="stage">
+        <div class="stage-copy" aria-live="polite">
+          <p class="eyebrow" id="step-label">RECORDED EXECUTION</p>
+          <h3 id="step-title">Loading the recorded run…</h3>
+          <p id="step-caption">The saved case will appear here.</p>
+          <div class="state-line" id="state-line"></div>
+        </div>
+        <div class="snapshot" id="snapshot" aria-label="Saved watershed case"></div>
+      </div>
+    </section>
+    <section class="proof" aria-labelledby="proof-heading">
+      <p class="eyebrow">THE WORK BEHIND THE MOMENT</p>
+      <h2 id="proof-heading">New sessions.<br>The same responsibility.</h2>
+      <div class="proof-grid">
+        <article><span>01</span><h3>Strands selects the work.</h3><p>The agent reads the saved case and source observations, then proposes the review and its evidence links.</p></article>
+        <article><span>02</span><h3>AgentCore runs the turn.</h3><p>August and September execute in separate cloud sessions. Each returns a proposal that the case service validates.</p></article>
+        <article><span>03</span><h3>The case carries forward.</h3><p>The external ledger keeps evidence, acknowledgments and request receipts. A repeated request returns the saved result.</p></article>
+      </div>
+      <p class="context-note">The stakes are real: in July 2022, Las Vegas, New Mexico declared a disaster over flooding, ash and fire debris threatening its water supply.
+        <a href="https://www.env.nm.gov/wp-content/uploads/2022/08/2022-08-03-COMMS-City-of-Las-Vegas-drinking-water-remains-safe-to-drink-Final.pdf">Read the official NMED account ↗</a>
+      </p>
+    </section>
+    <section class="evidence" aria-label="Inspect the evidence">
+      <details><summary>How this moment was executed <b aria-hidden="true">+</b></summary><div id="execution-summary"></div><div id="trace"></div></details>
+      <details><summary>Verified behavior and source version <b aria-hidden="true">+</b></summary><div id="checks" class="check-list"></div><div id="provenance"></div></details>
+      <details><summary>Historical evidence and attribution <b aria-hidden="true">+</b></summary><div id="sources"></div><p class="source-note">Derived from Nichols et al. (2024), Gallinas field archive v1.0.1, under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, with USGS gauge summaries. Changes include extraction, counting, summaries, unit conversion and inferred MDT timestamps. <a href="https://github.com/aistanbulresearch/watershed-memory/blob/main/watershed_memory/data/NOTICE.md">Full data attribution</a>. Observation availability is simulated; station coverage describes the archive.</p></details>
+      <p id="load-message" class="load-message" role="status"></p>
+    </section>
+  </main>
+  <footer><span>Watershed Memory · AIstanbul Research Group</span><a href="https://github.com/aistanbulresearch/watershed-memory">Run the live workspace · source on GitHub ↗</a></footer>
+  <script src="./app.js" defer></script>
+</body>
+</html>

@@ -4,11 +4,15 @@
 
 **A wildfire changes more than the landscape. It changes the work of protecting a drinking-water source.**
 
-Every new observation arrives alongside earlier measurements, unfinished reviews and changing evidence coverage. For a source-water team, the job is to connect what changed with what still needs attention.
+In July 2022, Las Vegas, New Mexico declared a disaster after flooding, ash and fire debris damaged infrastructure and threatened its water supply. Its water team had to keep monitoring an evolving watershed. [New Mexico Environment Department](https://www.env.nm.gov/wp-content/uploads/2022/08/2022-08-03-COMMS-City-of-Las-Vegas-drinking-water-remains-safe-to-drink-Final.pdf).
+
+Every new observation arrives alongside earlier measurements, unfinished reviews and changing evidence coverage. The work has to stay connected from one storm to the next.
 
 **Watershed Memory keeps that work connected.** One watershed case carries observations and operator responses forward. A later event strengthens an existing review; missing station evidence gets its own review. The next storm arrives. The work stays connected.
 
 Built by **AIstanbul Research Group** for the **Agents for Humans Hackathon**, Professional Agents track.
+
+**[Watch the verified cloud run](https://aistanbulresearch.github.io/watershed-memory/)** — four recorded moments, one enduring case, with the actual Strands tool receipts available to inspect.
 
 ### Try the operator workspace
 
@@ -35,9 +39,9 @@ The workspace identifies **historical replay · rules**. Operator responses are 
 
 The Strands integration exposes three bounded tools: read saved case context, retrieve a released observation window, and propose a review against an explicitly selected unfinished task. The service validates the work and its evidence before committing the turn. A model cannot write an operator response or declare the watershed recovered.
 
-The installed SDK is tested through its actual model/tool protocol, including context-dependent task selection and failure handling. A separate command runs the three-case gate against real Bedrock credentials and saves call, usage, tool and persistence evidence. [Run the Strands gate](docs/ENGINEERING.md#real-strands-gate).
+**Real Strands execution has passed all three feasibility cases:** unfinished work, acknowledged work with missing evidence, and new work after completion. The gate records tool choices, usage, duplicate handling and fresh-process persistence. [Run the Strands gate](docs/ENGINEERING.md#real-strands-gate).
 
-**AgentCore Runtime and Observability are the cloud deployment target.** The current release provides the local workspace and Strands integration; cloud deployment is a separate acceptance checkpoint.
+**AgentCore runs the agent. The case carries the memory.** The verified cloud run uses two separate Runtime sessions: August continues the same review; September preserves its acknowledgment and opens a separate evidence-gap review. Both repeated requests return saved receipts without another invocation. The case restores identically in a fresh process. [Inspect the verified run](docs/VERIFIED_RUN.md) · [Explore the Runtime boundary](docs/AGENTCORE.md).
 
 ### Engineering worth opening
 
@@ -55,11 +59,11 @@ The installed SDK is tested through its actual model/tool protocol, including co
 ```bash
 uv run pytest -q
 node --test tests/request-state.test.mjs
-uv run ruff check watershed_memory tests feasibility/run_strands.py
+uv run ruff check watershed_memory tests runtime deployment feasibility/run_strands.py feasibility/run_agentcore.py feasibility/export_evidence.py
 python -m unittest discover -s feasibility -p "test_*.py"
 ```
 
-Product tests cover the HTTP journey, isolation, failure atomicity, adversarial planner output, request claims and the Strands SDK protocol. The original proof remains reproducible, with **21 tests and 11 checks across eight fresh processes**. [Original replay guide](feasibility/README.md).
+**113 Python tests** cover the HTTP journey, isolation, failure atomicity, adversarial planner output, request claims, Strands/AgentCore protocols and public evidence export. JavaScript request-state checks cover recovery after a lost response. The original proof remains reproducible, with **21 tests and 11 checks across eight fresh processes**. [Original replay guide](feasibility/README.md).
 
 ### License
 

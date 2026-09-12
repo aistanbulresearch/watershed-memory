@@ -176,7 +176,9 @@ class Service:
         if index >= len(PACKETS):
             raise Conflict("All three observation windows are already in this case.")
         released = PACKETS[:index + 1]
-        plan = self.planner.plan(deepcopy(state), deepcopy(released))
+        planning_state = deepcopy(state)
+        planning_state["_turn"] = {"request_id": request, "revision": revision}
+        plan = self.planner.plan(planning_state, deepcopy(released))
         validate_plan(plan, state, released)
         changes = []
         for proposal in plan.proposals:
