@@ -34,7 +34,7 @@ uv run --locked pytest tests/test_current_delivery_store.py tests/test_current_d
 
 The tests use temporary source fixtures and synthetic execution records. They exercise simultaneous requests, shared allowances, interrupted attempts, changed human plans, exact duplicate receipts, source acknowledgment and rollback after partial writes. Scripted SDK work belongs to explicitly simulated cases; isolated demonstration cases retain their own work and cannot acknowledge the canonical source queue.
 
-The next integration connects unattended source delivery and due-check scheduling to this transaction boundary. [Current Strands tools](CURRENT_AGENT.md) prepare the decision; the [work ledger](CURRENT_WORK.md) retains human actions; the [continuous watch](CONTINUOUS_WATCH.md) acquires source evidence.
+[Selective dispatch](CURRENT_DISPATCH.md) now connects pending source evidence and due checks to this transaction boundary. It retains replayable quiet decisions and reserves an invocation only when its explicit attention policy calls for review. [Current Strands tools](CURRENT_AGENT.md) prepare the decision; the [work ledger](CURRENT_WORK.md) retains human actions; the [continuous watch](CONTINUOUS_WATCH.md) acquires source evidence.
 
 - [Delivery transactions](../watershed_memory/current/delivery_store.py)
 - [Invocation and receipt records](../watershed_memory/current/delivery_types.py)

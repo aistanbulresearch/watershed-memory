@@ -13,11 +13,13 @@ from .context import CurrentContext
 from .fact_types import IntervalFacts
 from .fact_validation import bounded_number, event_id, utc
 from .facts import _arithmetic, compare_intervals
+from .source_health import SourceHealth
 
 _PARAMETER = re.compile(r"[0-9]{5}\Z", re.ASCII)
 _POLICY = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}\Z", re.ASCII)
 _REASONS = (
     "INITIAL_REVIEW",
+    "LATE_EVIDENCE",
     "COVERAGE_CHANGED",
     "SOURCE_CORRECTION",
     "MATERIAL_CHANGE",
@@ -138,7 +140,7 @@ class AttentionResult:
             raise ValueError("invalid attention result")
         if any(type(reason) is not str for reason in self.reasons):
             raise ValueError("invalid attention reason")
-        if len(self.reasons) > 5 or len(set(self.reasons)) != len(self.reasons):
+        if len(self.reasons) > len(_REASONS) or len(set(self.reasons)) != len(self.reasons):
             raise ValueError("invalid attention reason")
         if tuple(reason for reason in _REASONS if reason in self.reasons) != self.reasons:
             raise ValueError("invalid attention reason")
@@ -195,11 +197,34 @@ def evaluate_attention(
     policy: AttentionPolicy,
     *,
     basis: IntervalFacts | None = None,
+    basis_health: SourceHealth | None = None,
     handled_due_keys: tuple[str, ...] = (),
 ) -> AttentionResult:
     """Evaluate explicit configured review attention without side effects."""
     if type(context) is not CurrentContext or type(policy) is not AttentionPolicy:
         raise ValueError("invalid attention inputs")
+    health = context.source_health
+    if basis is not None and type(basis) is not IntervalFacts:
+        raise ValueError("invalid attention baseline")
+    if health is not None and basis is not None:
+        if type(basis_health) is not SourceHealth or (
+            basis_health.case_id,
+            basis_health.monitor_id,
+            basis_health.source_id,
+            basis_health.station_id,
+            basis_health.policy,
+        ) != (
+            health.case_id,
+            health.monitor_id,
+            health.source_id,
+            health.station_id,
+            health.policy,
+        ):
+            raise ValueError("attention requires the matching assessed source-health baseline")
+        if not basis.interval_end <= basis_health.evaluated_at <= context.evaluated_at:
+            raise ValueError("assessed source health is outside the baseline chronology")
+    elif basis_health is not None:
+        raise ValueError("source-health baseline requires a health-enabled interval baseline")
     if type(handled_due_keys) is not tuple or len(handled_due_keys) > 3:
         raise ValueError("invalid handled due keys")
     if any(
@@ -253,28 +278,33 @@ def evaluate_attention(
     if basis is None:
         reasons.append("INITIAL_REVIEW")
     else:
-        if (
-            current.missing_parameters,
-            current.null_latest_parameters,
-            current.stale_parameters,
-            current.interval_coverage,
-            current.freshness,
-            current.partial_window,
+
+        def coverage(item: IntervalFacts) -> tuple:
+            result = (
+                item.missing_parameters,
+                item.null_latest_parameters,
+                item.interval_coverage,
+                item.partial_window,
+            )
+            return result + ((item.stale_parameters, item.freshness) if health is None else ())
+
+        source_changed = health is not None and (
+            health.missing_parameters,
+            health.stale_parameters,
+            health.null_parameters,
         ) != (
-            comparison_basis.missing_parameters,
-            comparison_basis.null_latest_parameters,
-            comparison_basis.stale_parameters,
-            comparison_basis.interval_coverage,
-            comparison_basis.freshness,
-            comparison_basis.partial_window,
-        ):
+            basis_health.missing_parameters,
+            basis_health.stale_parameters,
+            basis_health.null_parameters,
+        )
+        if coverage(current) != coverage(comparison_basis) or source_changed:
             reasons.append("COVERAGE_CHANGED")
         correction = current.supersedes_event_id == basis.event_id
         if not correction:
             for task_id, evidence in context.review_evidence:
                 if current.supersedes_event_id in evidence:
                     correction = True
-        if correction:
+        if correction and current.event_id != basis.event_id:
             reasons.append("SOURCE_CORRECTION")
         for rule in policy.rules:
             now_item = next(

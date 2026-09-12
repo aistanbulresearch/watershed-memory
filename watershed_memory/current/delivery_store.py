@@ -143,103 +143,150 @@ class DeliveryStore:
         now: datetime,
         include_source_health: bool = False,
     ) -> DeliveryReservation | DeliveryReceipt:
+        with self.cases._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            return self._reserve(
+                db,
+                case_id,
+                event_id,
+                request_id=request_id,
+                profile=profile,
+                source_delivery=source_delivery,
+                now=now,
+                include_source_health=include_source_health,
+            )
+
+    def _reserve(
+        self,
+        db,
+        case_id: str,
+        event_id: str,
+        *,
+        request_id: str,
+        profile: InvocationProfile,
+        source_delivery: bool,
+        now: datetime,
+        include_source_health: bool = False,
+        prior_event_ids: tuple[str, ...] | None = None,
+    ) -> DeliveryReservation | DeliveryReceipt:
         _identifier(case_id, "case_id")
         _identifier(request_id, "request_id")
         validate_event_id(event_id)
         now = utc(now)
-        if (type(profile) is not InvocationProfile or type(source_delivery) is not bool
-            or type(include_source_health) is not bool):
+        if (
+            type(profile) is not InvocationProfile
+            or type(source_delivery) is not bool
+            or type(include_source_health) is not bool
+        ):
             raise ValueError("invalid delivery request")
         profile_json = _encoded(profile, limit=2048)
         request = {"event_id": event_id, "profile": profile, "source_delivery": source_delivery}
         if include_source_health:
             request["include_source_health"] = True
+        if prior_event_ids is not None:
+            if type(prior_event_ids) is not tuple or len(prior_event_ids) > 3:
+                raise ValueError("invalid reserved prior event IDs")
+            for identity in prior_event_ids:
+                validate_event_id(identity)
+            if event_id in prior_event_ids or len(set(prior_event_ids)) != len(prior_event_ids):
+                raise ValueError("duplicate reserved prior event IDs")
+            request["prior_event_ids"] = prior_event_ids
         encoded = _encoded(request, limit=4096)
-        with self.cases._connect() as db:
-            db.execute("BEGIN IMMEDIATE")
-            existing = db.execute(
-                "SELECT * FROM delivery_attempts WHERE case_id=? AND request_id=?",
-                (case_id, request_id),
+        if not db.in_transaction:
+            raise ValueError("delivery transaction is required")
+        existing = db.execute(
+            "SELECT * FROM delivery_attempts WHERE case_id=? AND request_id=?",
+            (case_id, request_id),
+        ).fetchone()
+        if existing is not None:
+            if (
+                existing["input_hash64"] != rows.digest(encoded)
+                or existing["input_json"] != encoded
+            ):
+                raise WorkflowConflict("delivery request ID already binds different input")
+            if existing["status"] == "COMMITTED":
+                return _receipt(existing)
+            raise DeliveryHeld("request is already reserved or reconciled; do not invoke again")
+        held = db.execute(
+            "SELECT attempt_id FROM delivery_attempts WHERE case_id=? "
+            "AND status IN ('RESERVED','FAILED','STALE') LIMIT 1",
+            (case_id,),
+        ).fetchone()
+        if held is not None:
+            raise DeliveryHeld("case has an unresolved invocation")
+        context = _load_context(
+            db,
+            case_id,
+            event_id,
+            evaluated_at=now,
+            include_source_health=include_source_health,
+            prior_event_ids=prior_event_ids,
+        )
+        if profile.mode == "SCRIPTED_SDK" and not context.simulated:
+            raise ValueError("scripted invocation requires an explicitly simulated case")
+        monitor = context.current.monitor_id
+        if source_delivery:
+            if context.current.case_id != case_id:
+                raise ValueError("isolated work cannot acknowledge the canonical source queue")
+            pending = db.execute(
+                "SELECT status FROM watch_outbox WHERE event_id=? AND monitor_id=?",
+                (event_id, monitor),
             ).fetchone()
-            if existing is not None:
-                if (
-                    existing["input_hash64"] != rows.digest(encoded)
-                    or existing["input_json"] != encoded
-                ):
-                    raise WorkflowConflict("delivery request ID already binds different input")
-                if existing["status"] == "COMMITTED":
-                    return _receipt(existing)
-                raise DeliveryHeld("request is already reserved or reconciled; do not invoke again")
-            held = db.execute(
-                "SELECT attempt_id FROM delivery_attempts WHERE case_id=? "
-                "AND status IN ('RESERVED','FAILED','STALE') LIMIT 1",
-                (case_id,),
-            ).fetchone()
-            if held is not None:
-                raise DeliveryHeld("case has an unresolved invocation")
-            context = _load_context(db, case_id, event_id, evaluated_at=now,
-                include_source_health=include_source_health)
-            if profile.mode == "SCRIPTED_SDK" and not context.simulated:
-                raise ValueError("scripted invocation requires an explicitly simulated case")
-            monitor = context.current.monitor_id
-            if source_delivery:
-                if context.current.case_id != case_id:
-                    raise ValueError("isolated work cannot acknowledge the canonical source queue")
-                pending = db.execute(
-                    "SELECT status FROM watch_outbox WHERE event_id=? AND monitor_id=?",
-                    (event_id, monitor),
-                ).fetchone()
-                if pending is None or pending[0] != "PENDING":
-                    raise WorkflowConflict("source event is not pending canonical delivery")
-            column = "scripted" if profile.mode == "SCRIPTED_SDK" else "provider"
-            changed = db.execute(
-                f"UPDATE delivery_allowance SET {column}_used={column}_used+1 "
-                f"WHERE singleton=1 AND {column}_used<{column}_limit"
-            ).rowcount
-            if changed != 1:
-                raise AllowanceExceeded("installation invocation allowance is exhausted")
-            identity = "attempt-" + uuid.uuid4().hex
-            prior = rows.encode([item.event_id for item in context.prior])
-            review_refs = _encoded(
-                tuple(
-                    (review.task_id, review.revision, evidence)
-                    for review, (_, evidence) in zip(
-                        context.reviews, context.review_evidence, strict=True
-                    )
-                ),
-                limit=4096,
-            )
+            if pending is None or pending[0] != "PENDING":
+                raise WorkflowConflict("source event is not pending canonical delivery")
+        column = "scripted" if profile.mode == "SCRIPTED_SDK" else "provider"
+        changed = db.execute(
+            f"UPDATE delivery_allowance SET {column}_used={column}_used+1 "
+            f"WHERE singleton=1 AND {column}_used<{column}_limit"
+        ).rowcount
+        if changed != 1:
+            raise AllowanceExceeded("installation invocation allowance is exhausted")
+        identity = "attempt-" + uuid.uuid4().hex
+        prior = rows.encode([item.event_id for item in context.prior])
+        review_refs = _encoded(
+            tuple(
+                (review.task_id, review.revision, evidence)
+                for review, (_, evidence) in zip(
+                    context.reviews, context.review_evidence, strict=True
+                )
+            ),
+            limit=4096,
+        )
+        db.execute(
+            "INSERT INTO delivery_attempts(attempt_id,case_id,monitor_id,event_id,request_id,"
+            "input_json,input_hash64,profile_json,mode,source_delivery,status,case_revision,"
+            "coverage_digest64,context_digest64,prior_ids_json,review_refs_json,evaluated_at) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                identity,
+                case_id,
+                monitor,
+                event_id,
+                request_id,
+                encoded,
+                rows.digest(encoded),
+                profile_json,
+                profile.mode,
+                int(source_delivery),
+                "RESERVED",
+                context.case_revision,
+                context.policy_digest,
+                rows.digest(_json(context)),
+                prior,
+                review_refs,
+                now.isoformat(),
+            ),
+        )
+        if include_source_health:
+            ensure_health_schema(db, create=True)
             db.execute(
-                "INSERT INTO delivery_attempts(attempt_id,case_id,monitor_id,event_id,request_id,"
-                "input_json,input_hash64,profile_json,mode,source_delivery,status,case_revision,"
-                "coverage_digest64,context_digest64,prior_ids_json,review_refs_json,evaluated_at) "
-                "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO health_attempts VALUES(?,?)",
                 (
                     identity,
-                    case_id,
-                    monitor,
-                    event_id,
-                    request_id,
-                    encoded,
-                    rows.digest(encoded),
-                    profile_json,
-                    profile.mode,
-                    int(source_delivery),
-                    "RESERVED",
-                    context.case_revision,
-                    context.policy_digest,
-                    rows.digest(_json(context)),
-                    prior,
-                    review_refs,
-                    now.isoformat(),
+                    _encoded(context.source_health.version_ids, limit=512),
                 ),
             )
-            if include_source_health:
-                ensure_health_schema(db, create=True)
-                db.execute("INSERT INTO health_attempts VALUES(?,?)", (
-                    identity, _encoded(context.source_health.version_ids, limit=512),
-                ))
-            return DeliveryReservation(identity, request_id, profile, source_delivery, context, now)
+        return DeliveryReservation(identity, request_id, profile, source_delivery, context, now)
 
     def commit(
         self, attempt_id: str, execution: CurrentExecution, *, now: datetime
@@ -251,86 +298,98 @@ class DeliveryStore:
         _canonical_json(encoded, "execution", 524288)
         with self.cases._connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            attempt = _attempt(db, attempt_id)
-            _identity(attempt, execution)
-            if attempt["status"] == "COMMITTED":
-                if attempt["execution_json"] != encoded:
-                    raise WorkflowConflict("committed attempt already has a different execution")
-                return _receipt(attempt)
-            if attempt["status"] != "RESERVED":
-                raise DeliveryHeld("attempt is held or reconciled and cannot accept this result")
-            case = _time(db, attempt, now)
-            request = json.loads(attempt["input_json"])
-            include_health = request.get("include_source_health", False)
-            if type(include_health) is not bool:
-                raise ValueError("invalid reserved source-health mode")
-            source_pins = None
-            if include_health:
-                ensure_health_schema(db)
-                health_row = db.execute(
-                    "SELECT version_ids_json FROM health_attempts WHERE attempt_id=?", (attempt_id,)
-                ).fetchone()
-                if health_row is None:
-                    raise ValueError("missing reserved source-health references")
-                source_pins = tuple(json.loads(health_row[0]))
-            context = _load_context(
-                db,
-                attempt["case_id"],
-                attempt["event_id"],
-                evaluated_at=timestamp(attempt["evaluated_at"]),
-                prior_event_ids=tuple(json.loads(attempt["prior_ids_json"])),
-                review_refs=tuple(
-                    (item[0], item[1], tuple(item[2]))
-                    for item in json.loads(attempt["review_refs_json"])
-                ),
-                reserved_revision=attempt["case_revision"],
-                include_source_health=include_health,
-                source_version_ids=source_pins,
-            )
-            if rows.digest(_json(context)) != attempt["context_digest64"]:
-                raise WorkflowConflict("reserved context differs from trusted source replay")
-            validate_assessment(context, execution.assessment)
-            if case["revision"] != attempt["case_revision"]:
-                db.execute(
-                    "UPDATE delivery_attempts SET status='STALE',execution_json=?,finished_at=? "
-                    "WHERE attempt_id=?",
-                    (encoded, now.isoformat(), attempt_id),
-                )
-                return _receipt(_attempt(db, attempt_id))
-            work = []
-            revision = context.case_revision
-            for index, decision in enumerate(execution.assessment.decisions):
-                args = dict(
-                    request_id=f"{attempt_id}-{index}", expected_case_revision=revision, now=now
-                )
-                if decision.disposition == "PROPOSE_REVIEW":
-                    draft = ReviewDraft(
-                        decision.kind,
-                        decision.title,
-                        decision.reason,
-                        decision.event_id,
-                        decision.next_check_at,
-                    )
-                    saved = self.cases._stage_review(db, context.case_id, draft, **args)
-                elif decision.disposition == "CONTINUE_EXISTING_REVIEW":
-                    link = EvidenceLink(decision.target_task_id, decision.event_id, decision.reason)
-                    saved = self.cases._link_evidence(db, context.case_id, link, **args)
-                else:
-                    continue
-                work.append(saved)
-                revision += 1
-            if attempt["source_delivery"]:
-                self._acknowledge(db, attempt)
+            return self._commit(db, attempt_id, execution, now=now)
+
+    def _commit(
+        self, db, attempt_id: str, execution: CurrentExecution, *, now: datetime
+    ) -> DeliveryReceipt:
+        if type(execution) is not CurrentExecution:
+            raise ValueError("expected a typed current execution")
+        now = utc(now)
+        encoded = _encoded(execution, limit=524288)
+        _canonical_json(encoded, "execution", 524288)
+        if not db.in_transaction:
+            raise ValueError("delivery transaction is required")
+        attempt = _attempt(db, attempt_id)
+        _identity(attempt, execution)
+        if attempt["status"] == "COMMITTED":
+            if attempt["execution_json"] != encoded:
+                raise WorkflowConflict("committed attempt already has a different execution")
+            return _receipt(attempt)
+        if attempt["status"] != "RESERVED":
+            raise DeliveryHeld("attempt is held or reconciled and cannot accept this result")
+        case = _time(db, attempt, now)
+        request = json.loads(attempt["input_json"])
+        include_health = request.get("include_source_health", False)
+        if type(include_health) is not bool:
+            raise ValueError("invalid reserved source-health mode")
+        source_pins = None
+        if include_health:
+            ensure_health_schema(db)
+            health_row = db.execute(
+                "SELECT version_ids_json FROM health_attempts WHERE attempt_id=?", (attempt_id,)
+            ).fetchone()
+            if health_row is None:
+                raise ValueError("missing reserved source-health references")
+            source_pins = tuple(json.loads(health_row[0]))
+        context = _load_context(
+            db,
+            attempt["case_id"],
+            attempt["event_id"],
+            evaluated_at=timestamp(attempt["evaluated_at"]),
+            prior_event_ids=tuple(json.loads(attempt["prior_ids_json"])),
+            review_refs=tuple(
+                (item[0], item[1], tuple(item[2]))
+                for item in json.loads(attempt["review_refs_json"])
+            ),
+            reserved_revision=attempt["case_revision"],
+            include_source_health=include_health,
+            source_version_ids=source_pins,
+        )
+        if rows.digest(_json(context)) != attempt["context_digest64"]:
+            raise WorkflowConflict("reserved context differs from trusted source replay")
+        validate_assessment(context, execution.assessment)
+        if case["revision"] != attempt["case_revision"]:
             db.execute(
-                "UPDATE current_cases SET revision=revision+1,updated_at=? WHERE case_id=?",
-                (now.isoformat(), context.case_id),
-            )
-            db.execute(
-                "UPDATE delivery_attempts SET status='COMMITTED',execution_json=?,work_json=?,"
-                "finished_at=? WHERE attempt_id=?",
-                (encoded, _encoded(tuple(work), limit=20000), now.isoformat(), attempt_id),
+                "UPDATE delivery_attempts SET status='STALE',execution_json=?,finished_at=? "
+                "WHERE attempt_id=?",
+                (encoded, now.isoformat(), attempt_id),
             )
             return _receipt(_attempt(db, attempt_id))
+        work = []
+        revision = context.case_revision
+        for index, decision in enumerate(execution.assessment.decisions):
+            args = dict(
+                request_id=f"{attempt_id}-{index}", expected_case_revision=revision, now=now
+            )
+            if decision.disposition == "PROPOSE_REVIEW":
+                draft = ReviewDraft(
+                    decision.kind,
+                    decision.title,
+                    decision.reason,
+                    decision.event_id,
+                    decision.next_check_at,
+                )
+                saved = self.cases._stage_review(db, context.case_id, draft, **args)
+            elif decision.disposition == "CONTINUE_EXISTING_REVIEW":
+                link = EvidenceLink(decision.target_task_id, decision.event_id, decision.reason)
+                saved = self.cases._link_evidence(db, context.case_id, link, **args)
+            else:
+                continue
+            work.append(saved)
+            revision += 1
+        if attempt["source_delivery"]:
+            self._acknowledge(db, attempt)
+        db.execute(
+            "UPDATE current_cases SET revision=revision+1,updated_at=? WHERE case_id=?",
+            (now.isoformat(), context.case_id),
+        )
+        db.execute(
+            "UPDATE delivery_attempts SET status='COMMITTED',execution_json=?,work_json=?,"
+            "finished_at=? WHERE attempt_id=?",
+            (encoded, _encoded(tuple(work), limit=20000), now.isoformat(), attempt_id),
+        )
+        return _receipt(_attempt(db, attempt_id))
 
     @staticmethod
     def _acknowledge(db: sqlite3.Connection, attempt: sqlite3.Row) -> None:

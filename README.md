@@ -51,6 +51,8 @@ The current-observation collector checks official USGS rain, flow and turbidity 
 
 This current collector performs acquisition without model calls. The browser and cloud walkthrough above demonstrate the separate verified historical agent journey.
 
+**Bring back the decision, not every reading.** The current dispatcher checks new evidence against the last completed assessment, keeps quiet updates in the case and brings back the operator's scheduled check. The agent receives the specific earlier evidence behind an accumulated change. Human-plan changes, source corrections and interrupted decisions retain their history. [Explore selective dispatch](docs/CURRENT_DISPATCH.md).
+
 ### Engineering worth opening
 
 - **One enduring case:** observations, reviews and operator responses stay connected across restarts.
@@ -60,6 +62,7 @@ This current collector performs acquisition without model calls. The browser and
 - **A durable live allowance:** server restarts preserve the attempt counter; failures consume capacity and saved receipts do not.
 - **Evidence checks:** unreleased observations are unavailable to tools; recorded results are checked against case and source packets.
 - **Continuous acquisition:** bounded source reads, revision-linked evidence, exclusive poll leases and an indexed durable event queue.
+- **Selective attention:** replayable quiet decisions, accumulated-change comparisons and exact operator-plan check times, connected to a bounded Strands runner.
 - **An operator experience:** accessible actions, saved responses, contextual next steps, and evidence/trace panels on demand.
 
 [Architecture](docs/ARCHITECTURE.md) · [Implementation and checks](docs/ENGINEERING.md) · [Interactive hosting](docs/HOSTING.md) · [Source attribution](THIRD_PARTY_NOTICES.md)
