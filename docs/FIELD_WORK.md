@@ -2,7 +2,7 @@
 
 Watershed Memory now keeps the field-work cycle together: the review that prompted an inspection, the approved place and plan, the operator's result, its evidence references, and the person's verification. A later correction changes the current result while preserving the earlier account.
 
-This is the implemented field ledger. The browser desk and the next agent decision are the next integration steps.
+The field ledger and its [field-aware context](FIELD_CONTEXT.md) are implemented. Browser controls and field-aware Strands decisions are the next integration steps.
 
 | Team action | What the ledger preserves |
 |---|---|
@@ -33,7 +33,7 @@ A local rehearsal copied the saved case containing genuinely fetched USGS observ
 
 A separate process recovered both the current partial result and the earlier verified report. Retrying the earlier verification returned its original receipt without changing the case. All pre-existing source, review, delivery and dispatch tables remained unchanged except the case's revision and update time. The rehearsal made no network or model calls.
 
-The field ledger has **144 focused checks**, including real concurrent writers and rollback at transaction failure points. The complete project suite passed **1,269 tests**; **1,070 tests** also passed against a fresh installed package. Field-aware agent reasoning and browser controls will have their own integration proofs.
+The field-ledger checkpoint passed **144 focused checks**, including real concurrent writers and rollback at transaction failure points. Its complete project suite passed **1,269 tests**; **1,070 tests** also passed against a fresh installed package. The subsequent context extension adds its own tests and restart proof. Field-aware Strands decisions and browser controls will have their own integration proofs.
 
 ## Inspect the engineering
 

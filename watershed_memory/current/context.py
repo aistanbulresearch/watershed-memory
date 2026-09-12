@@ -163,6 +163,31 @@ def _load_context(
     include_source_health: bool = False,
     source_version_ids: tuple[int | None, ...] | None = None,
 ) -> CurrentContext:
+    context = _load_base_context(
+        db, case_id, event_id, evaluated_at=evaluated_at,
+        prior_event_ids=prior_event_ids, review_refs=review_refs,
+        reserved_revision=reserved_revision, include_source_health=include_source_health,
+        source_version_ids=source_version_ids,
+    )
+    if reserved_revision is None:
+        from .field_presence import require_legacy_context
+
+        require_legacy_context(db, case_id)
+    return context
+
+
+def _load_base_context(
+    db: sqlite3.Connection,
+    case_id: str,
+    event_id: str,
+    *,
+    evaluated_at: datetime,
+    prior_event_ids: tuple[str, ...] | None = None,
+    review_refs: tuple[tuple[str, int, tuple[str, ...]], ...] | None = None,
+    reserved_revision: int | None = None,
+    include_source_health: bool = False,
+    source_version_ids: tuple[int | None, ...] | None = None,
+) -> CurrentContext:
     """Reconstruct a trusted snapshot inside the caller's transaction."""
     if not db.in_transaction:
         raise ValueError("context loading requires a caller transaction")
@@ -192,9 +217,6 @@ def _load_context(
     case = rows.case_row(db, case_id)
     config = _case_config(case)
     if reserved_revision is None:
-        from .field_presence import require_legacy_context
-
-        require_legacy_context(db, case_id)
         rows.check_time(case, evaluated)
     elif reserved_revision > case["revision"] or timestamp(case["created_at"]) > evaluated:
         raise ValueError("reserved context predates its case or exceeds the current revision")
