@@ -53,6 +53,8 @@ This current collector performs acquisition without model calls. The browser and
 
 **Bring back the decision, not every reading.** The current dispatcher checks new evidence against the last completed assessment, keeps quiet updates in the case and brings back the operator's scheduled check. The agent receives the specific earlier evidence behind an accumulated change. Human-plan changes, source corrections and interrupted decisions retain their history. [Explore selective dispatch](docs/CURRENT_DISPATCH.md).
 
+**The next decision, with the team's plan still in view.** The local current field desk combines collected readings, saved work and the next check. Operators can change or defer a plan; lost confirmations recover without duplicate work, and an outdated form cannot overwrite a newer decision. [Open the current field desk](docs/CURRENT_DESK.md).
+
 ### Engineering worth opening
 
 - **One enduring case:** observations, reviews and operator responses stay connected across restarts.
@@ -72,6 +74,7 @@ This current collector performs acquisition without model calls. The browser and
 ```bash
 uv run pytest -q
 node --test tests/request-state.test.mjs
+node --test tests/current-state.test.mjs tests/current-ui.test.mjs
 uv run ruff check watershed_memory tests runtime deployment feasibility/run_strands.py feasibility/run_agentcore.py feasibility/export_evidence.py
 python -m unittest discover -s feasibility -p "test_*.py"
 ```

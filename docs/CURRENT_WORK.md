@@ -2,7 +2,7 @@
 
 The current work ledger connects source evidence to a review that the team owns. An operator can change the plan or defer its next check. When another observation arrives, its evidence can join that same review while the human decision stays intact.
 
-This is the local current-work workflow. The [browser walkthrough](https://aistanbulresearch.github.io/watershed-memory/) shows the historical Strands/AgentCore journey.
+The [current field desk](CURRENT_DESK.md) exposes this local workflow in the browser. The [public walkthrough](https://aistanbulresearch.github.io/watershed-memory/) shows the historical Strands/AgentCore journey.
 
 | Moment | Saved result |
 |---|---|

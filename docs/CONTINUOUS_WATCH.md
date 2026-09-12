@@ -2,7 +2,7 @@
 
 Watershed Memory can collect current rain, flow and turbidity observations from the official USGS Gallinas River station without an operator clicking through events. Each measurement stays linked to its source fetch receipt. New and corrected observations become durable, compact evidence events ready for case assessment.
 
-The collector is a separate current-observation path. The browser walkthrough demonstrates the verified 2022 Strands/AgentCore case journey; the current collector described here performs acquisition and queues evidence without invoking a model.
+The collector performs acquisition and queues evidence without invoking a model. The [current field desk](CURRENT_DESK.md) displays saved current readings and operator plans. The public recorded walkthrough demonstrates the verified 2022 Strands/AgentCore case journey.
 
 ## Run a bounded watch
 
