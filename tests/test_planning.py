@@ -29,12 +29,12 @@ def test_tools_require_read_context_and_released_evidence(tmp_path):
     with pytest.raises(ValueError):
         tools.get_observations(PACKETS[1]["event_id"])
     with pytest.raises(ValueError):
-        tools.propose_review(MONITORING, PACKETS[0]["event_id"], "A new review is warranted.")
+        tools.propose_review(MONITORING, PACKETS[0]["event_id"], "A new review is warranted.", None)
     tools.get_case_context()
     tools.get_observations(PACKETS[0]["event_id"])
     with pytest.raises(ValueError):
-        tools.propose_review(GAP, PACKETS[0]["event_id"], "Invent a gap despite available data.")
-    tools.propose_review(MONITORING, PACKETS[0]["event_id"], "Review the available P2 observations.")
+        tools.propose_review(GAP, PACKETS[0]["event_id"], "Invent a gap despite available data.", None)
+    tools.propose_review(MONITORING, PACKETS[0]["event_id"], "Review the available P2 observations.", None)
     assert tools.finish().proposals[0]["existing_task_id"] is None
 
 
@@ -61,7 +61,7 @@ def test_failure_after_staging_leaves_no_partial_writes(tmp_path):
             tools = EvidenceTools(state, released)
             tools.get_case_context()
             tools.get_observations(released[-1]["event_id"])
-            tools.propose_review(MONITORING, released[-1]["event_id"], "Review this source evidence.")
+            tools.propose_review(MONITORING, released[-1]["event_id"], "Review this source evidence.", None)
             raise RuntimeError("Simulated provider failure after tool use")
 
     service = Service(tmp_path / "case.sqlite", planner=FailingPlanner())
@@ -100,3 +100,34 @@ def test_forged_trace_is_rejected_even_with_valid_proposals(tmp_path):
     with pytest.raises(ValueError, match="recorded tool result"):
         service.advance(before["session_id"], "forged")
     assert service.snapshot(before["session_id"]) == before
+
+
+def test_acknowledged_target_is_explicit_and_feedback_identifies_the_parameter(tmp_path):
+    service = Service(tmp_path / "target.sqlite")
+    session = service.create_session()["session_id"]
+    state = service.advance(session, "july")
+    task_id = state["tasks"][0]["id"]
+    state = service.respond(session, "ack", task_id, "acknowledge", "Review remains assigned.")
+    tools = EvidenceTools(state, PACKETS[:2])
+    tools.get_case_context()
+    tools.get_observations(PACKETS[1]["event_id"])
+    with pytest.raises(ValueError) as failure:
+        tools.propose_review(MONITORING, PACKETS[1]["event_id"], "Review the new P2 evidence.", None)
+    assert "existing_task_id" in str(failure.value)
+    assert task_id in str(failure.value)
+    assert not tools.proposals
+    result = tools.propose_review(MONITORING, PACKETS[1]["event_id"],
+                                  "Review the new P2 evidence.", task_id)
+    assert result["operation"] == "LINK_EVIDENCE"
+    assert service.snapshot(session) == state
+
+
+def test_real_sdk_schema_requires_target_even_when_explicitly_null(tmp_path):
+    from strands import tool
+
+    state = Service(tmp_path / "schema.sqlite").create_session()
+    schema = tool(EvidenceTools(state, PACKETS[:1]).propose_review).tool_spec["inputSchema"]["json"]
+    assert "existing_task_id" in schema["required"]
+    field = schema["properties"]["existing_task_id"]
+    assert {item["type"] for item in field["anyOf"]} == {"string", "null"}
+    assert "ACKNOWLEDGED" in field["description"]

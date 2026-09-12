@@ -48,6 +48,7 @@ def calls_for(packet):
         ("get_case_context", {}),
         ("get_observations", {"event_id": packet["event_id"]}),
         ("propose_review", {"kind": "MONITORING_REVIEW", "event_id": packet["event_id"],
+                            "existing_task_id": None,
                             "reason": "Review the new P2 observations in the source-water case."}),
     ]
 
@@ -114,6 +115,7 @@ class ContextDrivenScriptedModel(ScriptedModel):
                 "reason": "Link the current P2 observations to the context-selected review."})
         elif self.step == 3 and self.packet["p1_turbidity_count"] == 0:
             call = ("propose_review", {"kind": "EVIDENCE_GAP_REVIEW",
+                "existing_task_id": None,
                 "event_id": self.packet["event_id"],
                 "reason": "P1 numeric evidence is absent from the current historical window."})
         else:

@@ -11,8 +11,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from . import __version__
+from .agentcore_client import AgentCoreTurnError
 from .budget import DemoBudgetExhausted
 from .service import Conflict, InProgress, Service, SessionNotFound
+from .strands_agent import AgentTurnError
 
 
 class StrictBody(BaseModel):
@@ -74,6 +76,12 @@ def create_app(service: Service | None = None) -> FastAPI:
     @app.exception_handler(DemoBudgetExhausted)
     async def exhausted(_request: Request, error: DemoBudgetExhausted):
         return JSONResponse({"detail": str(error)}, status_code=429)
+
+    @app.exception_handler(AgentTurnError)
+    @app.exception_handler(AgentCoreTurnError)
+    async def agent_failed(_request: Request, _error: RuntimeError):
+        return JSONResponse({"detail": "The agent could not finish this observation. "
+                             "Your saved case is unchanged. Retry when ready."}, status_code=503)
 
     @app.get("/api/health")
     def health():
