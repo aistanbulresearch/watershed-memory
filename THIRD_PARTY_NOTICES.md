@@ -6,7 +6,7 @@ Project code is licensed under MIT. The source datasets retain the terms provide
 
 Nichols et al. (2024), *Data archive: Longitudinal propagation of aquatic disturbances following the largest wildfire recorded in New Mexico, USA*. [Zenodo DOI](https://doi.org/10.5281/zenodo.12762324), pinned record **12764157**, version **1.0.1**, archive `rialgopi/HPCC-wildfire-v1.0.1.zip`.
 
-License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/). Downloaded data remain unchanged. The project's extracted rows, unit conversions, timestamp interpretation and event summaries are derived work. The data are downloaded by the setup command rather than included in Git.
+License: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/). Downloaded source data remain unchanged. The project's extracted rows, unit conversions, timestamp interpretation and event summaries are derived work. A small three-window observation bundle is included in the application with an [adjacent attribution/change notice](watershed_memory/data/NOTICE.md). The full archive is downloaded only by the original proof's setup command.
 
 The [associated publication](https://doi.org/10.1038/s41467-024-51306-9) supplies scientific context. Its figures and text are not redistributed in this repository.
 
@@ -16,4 +16,4 @@ Official observations from [USGS Water Services](https://waterservices.usgs.gov/
 
 ## Software
 
-The current data and persistence workflow uses the Python standard library. Source analysis programs from the downloaded archive are not executed or bundled. Strands integration is the next implementation milestone; dependency versions and notices will be added with that integration.
+The original data and persistence proof uses the Python standard library. The application installs its dependencies separately through `uv.lock`, including Strands Agents and the Bedrock AgentCore SDK (Apache-2.0); their licenses remain with their distributions. Source analysis programs from the downloaded archive are not executed or bundled.

@@ -158,7 +158,10 @@ def main() -> None:
             "observations_end": end.astimezone(timezone.utc).isoformat(),
             "p2_turbidity_count": item["stations"]["P2"]["window_turbidity"]["numeric_entries"],
             "p1_turbidity_count": item["stations"]["P1"]["window_turbidity"]["numeric_entries"],
-            "source_ids": ["zenodo:12764157", "USGS:08380500:00060"],
+            "source_ids": ["zenodo:12764157", "USGS:08380500:00060"] + (
+                ["USGS:08380500:00045"]
+                if item["rain_usgs_inches"]["window"]["numeric_entries"] else []
+            ),
             "rainfall_status": item["rainfall_status"],
             "timezone_status": "ARCHIVE_INFERRED_MDT_NOT_AUTHOR_CONFIRMED",
             "summary": item,

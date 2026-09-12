@@ -4,55 +4,63 @@
 
 **A wildfire changes more than the landscape. It changes the work of protecting a drinking-water source.**
 
-Every new storm brings another set of observations to connect with earlier measurements, unfinished reviews and missing evidence. The source-water team needs the whole story to decide what to inspect next.
+Every new observation arrives alongside earlier measurements, unfinished reviews and changing evidence coverage. For a source-water team, the job is to connect what changed with what still needs attention.
 
-**Watershed Memory keeps that work connected.** It carries a watershed case from one storm to the next, links new observations to the review already open, and brings missing evidence into the operator's work queue.
+**Watershed Memory keeps that work connected.** One watershed case carries observations and operator responses forward. A later event strengthens an existing review; missing station evidence gets its own review. The next storm arrives. The work stays connected.
 
 Built by **AIstanbul Research Group** for the **Agents for Humans Hackathon**, Professional Agents track.
 
-### Watch the story unfold
+### Try the operator workspace
 
-| A storm arrives | The case remembers | The operator moves the work forward |
-|---|---|---|
-| July observations open a review | August observations join the same unfinished task | The operator acknowledges the review |
-| September adds new evidence | Missing upstream measurements create a separate evidence review | Completing one review leaves the remaining work visible |
-
-The first working slice replays **three real Gallinas observation windows** through a persistent task engine. It makes actual database writes and verifies the result across **eight separate processes**. Human responses in this replay are demonstration actions.
-
-### Run it
-
-Python 3.10+; the current workflow uses the standard library.
+With [uv](https://docs.astral.sh/uv/) and Python 3.12:
 
 ```bash
 git clone https://github.com/aistanbulresearch/watershed-memory.git
 cd watershed-memory
-python -m feasibility.fetch_data
-python -m feasibility.reconcile
-python -m feasibility.run_proof
+uv sync --frozen
+uv run watershed-memory
 ```
 
-The first run downloads approximately 138 MB of public source data. Open the generated `proof.html` in the run directory printed by the final command. It shows the executed sequence, saved tasks and verification results. [Replay guide](feasibility/README.md).
+Open **http://127.0.0.1:8765**. The small historical observation bundle is included; the browser experience needs no AWS credentials or large download.
 
-### The engineering behind the memory
+1. **Start the replay.** July observations create a source-water review.
+2. **Bring in August.** The same unfinished review gains a second evidence link.
+3. **Record an acknowledgment.** The operator's note stays with the work.
+4. **Bring in September.** New observations join the case; absent P1 archive evidence opens a separate coverage review.
+5. **Complete one review and reload.** The completed work, remaining review and saved response are still there.
 
-- **Evidence with a trail:** source checksums, station identifiers, time windows and original row references travel with the observations.
-- **Work that persists:** one case, linked events, unfinished tasks and operator responses survive process restarts.
-- **Safe retries:** repeated events and repeated responses do not duplicate work; conflicting payloads are rejected.
-- **Time-aware state:** delayed older observations cannot roll the current case backward.
-- **Atomic changes:** task and evidence updates commit together, with rollback checks for failures.
+The workspace identifies **historical replay · rules**. Operator responses are demonstration actions. The records are real SQLite writes; each browser replay has an independent case.
 
-The current build runs the deterministic data and task layers. **Next: one Strands agent that retrieves the case history, selects evidence tools and updates the permitted review workflow, followed by the operator web experience.**
+### The agent behind the case
 
-[Architecture](docs/ARCHITECTURE.md) · [Explore the implementation](docs/ENGINEERING.md) · [Data sources](THIRD_PARTY_NOTICES.md)
+The Strands integration exposes three bounded tools: read saved case context, retrieve a released observation window, and propose a review against an explicitly selected unfinished task. The service validates the work and its evidence before committing the turn. A model cannot write an operator response or declare the watershed recovered.
 
-### Check the core
+The installed SDK is tested through its actual model/tool protocol, including context-dependent task selection and failure handling. A separate command runs the three-case gate against real Bedrock credentials and saves call, usage, tool and persistence evidence. [Run the Strands gate](docs/ENGINEERING.md#real-strands-gate).
+
+**AgentCore Runtime and Observability are the cloud deployment target.** The current release provides the local workspace and Strands integration; cloud deployment is a separate acceptance checkpoint.
+
+### Engineering worth opening
+
+- **One enduring case:** observations, reviews and operator responses stay connected across restarts.
+- **Explicit agent decisions:** the agent selects the existing task from saved context; completed work is never reopened implicitly.
+- **Atomic turns:** tools stage proposals; the complete validated turn commits together.
+- **Execution claims:** concurrent duplicate requests share one planner execution, with a durable claim and replayable receipt.
+- **Evidence checks:** unreleased observations are unavailable to tools; recorded results are checked against case and source packets.
+- **An operator experience:** accessible actions, saved responses, contextual next steps, and evidence/trace panels on demand.
+
+[Architecture](docs/ARCHITECTURE.md) · [Implementation and checks](docs/ENGINEERING.md) · [Source attribution](THIRD_PARTY_NOTICES.md)
+
+### Check it
 
 ```bash
-python -m unittest discover -s feasibility -p "test_*.py" -v
+uv run pytest -q
+node --test tests/request-state.test.mjs
+uv run ruff check watershed_memory tests feasibility/run_strands.py
+python -m unittest discover -s feasibility -p "test_*.py"
 ```
 
-The current suite contains **21 tests**. The replay adds **11 end-to-end checks**, including persistence, duplicate handling and the separation of completed reviews from outstanding work.
+Product tests cover the HTTP journey, isolation, failure atomicity, adversarial planner output, request claims and the Strands SDK protocol. The original proof remains reproducible, with **21 tests and 11 checks across eight fresh processes**. [Original replay guide](feasibility/README.md).
 
 ### License
 
-[MIT](LICENSE) · Copyright 2026 AIstanbul Research Group. Public datasets retain their own licenses and attribution, described in [Third-party notices](THIRD_PARTY_NOTICES.md).
+[MIT](LICENSE) · Copyright 2026 AIstanbul Research Group. The included extract retains its [source attribution and CC BY 4.0 notice](watershed_memory/data/NOTICE.md).

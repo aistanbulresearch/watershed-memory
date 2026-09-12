@@ -1,42 +1,55 @@
-# Follow the work through the system
+# Follow an observation into lasting work
 
-Start with an observation packet and follow it into a persistent task. The current replay exercises that path across three historical windows and eight fresh processes.
+Start the workspace and bring in July and August. The same review gains evidence. Acknowledge it, bring in September, then complete the monitoring review. The separate P1 evidence-gap review stays open. Reload to restore the saved result.
 
-## 1. Bring the evidence together
+## Run and inspect
 
-[fetch_data.py](../feasibility/fetch_data.py) downloads a pinned public archive and official USGS observations. It verifies the archive checksum and writes a source manifest.
+```bash
+uv sync --frozen
+uv run watershed-memory --port 8765
+```
 
-[reconcile.py](../feasibility/reconcile.py) extracts the relevant station rows, converts discharge units, compares timestamp alignments and builds replay packets. The export preserves original row numbers and source timestamps. Archive timestamps use an explicitly recorded MDT interpretation; official USGS observations carry their own offsets. The audit retains both event-day and full-window statistics.
+The server binds to loopback and serves only packaged static files. SQLite state lives under `.local/runtime/`; use `--database PATH` for a separate ledger. New replay creates an independent session without deleting previous work. The default workspace makes no AWS calls.
 
-## 2. Carry unfinished work forward
+The included historical packets derive from the Gallinas archive and USGS gauge 08380500. Counts describe numeric archive entries, not independent sample counts or safety thresholds. Archive times use the documented MDT interpretation; replay availability is a window-end convention. [Packaged notice](../watershed_memory/data/NOTICE.md).
 
-[workflow.py](../feasibility/workflow.py) persists five connected records: cases, events, tasks, task evidence and responses. A uniqueness rule prevents multiple unfinished tasks of the same kind. New evidence links to the existing review, while a missing expected monitor can create separate evidence-review work.
+## Real Strands gate
 
-The demonstration review policy is named in the event packet. Its job is to organize monitoring review; an operator completes the review as a distinct action.
+The live command requires authenticated AWS access, an available Bedrock model and explicit account/region selection. It makes billable calls: three cases by default, capped at eight model calls and 120 seconds per case, with at most 1,000 output tokens per call.
 
-## 3. Keep retries and timing predictable
+```bash
+uv run python feasibility/run_strands.py --profile YOUR_PROFILE --expected-account YOUR_ACCOUNT_ID --region YOUR_REGION --model-id YOUR_BEDROCK_MODEL_ID
+```
 
-Event identifiers are checked against payload hashes. Repeated identical input returns a duplicate result; changed content under the same identifier is rejected. Operator responses have the same protection.
+| Case | Context | Checked outcome |
+|---|---|---|
+| S1 | New evidence with unfinished work | Select existing task and link August evidence |
+| S2 | September with acknowledged review and absent P1 | Keep review, link evidence, open coverage review |
+| S3 | Same September evidence after prior completion | Preserve completed work and propose new warranted reviews |
 
-Observation recency and replay availability are separate fields. An older packet arriving later can be recorded without rolling back the current case. Transactions protect state and evidence updates from partial writes.
+Each run writes a new directory with an input/version manifest, before/after snapshots and results. Success includes repeated-request protection and a fresh-process read. Failures retain observable execution evidence. A scripted model never substitutes for a failed live call.
 
-## 4. Exercise the complete sequence
+The agent chooses `get_case_context`, `get_observations` and `propose_review`. Proposals include the current event, a short reason and an exact existing task ID when appropriate. Final prose is not a database command. Tool results, SDK/model identity, call count and aggregate usage are retained; hidden reasoning is not collected.
 
-[run_proof.py](../feasibility/run_proof.py) launches a fresh process for every step:
+## Meaningful local checks
 
-1. Open the July review.
-2. Attach August evidence to that review.
-3. Save a demonstration acknowledgment.
-4. Attach September evidence and open an evidence-gap review.
-5. Complete the monitoring review while the gap remains open.
-6. Redeliver the September packet.
-7. Retry the completion response.
-8. Read the exact saved state from another process.
+```bash
+uv run pytest -q
+node --test tests/request-state.test.mjs
+uv run ruff check watershed_memory tests feasibility/run_strands.py
+```
 
-The runner writes `trace.json`, `summary.json`, `case.sqlite` and a readable `proof.html`. Eleven assertions check the resulting sequence. The input events are historical, packet availability is a replay convention, and human responses are simulated.
+Tests exercise FastAPI, separate sessions, responses, duplicates and concurrent claims. Adversarial planners try direct safety-state mutation, invented coverage gaps and forged tool results; the service rejects them. SDK tests use a labelled scripted provider to exercise the installed Strands protocol: read a task ID from tool output, select it on a later event, handle completed work and enforce a call cap. These validate integration mechanics; the live command supplies model evidence.
 
-## 5. Test the failure paths
+JavaScript checks distinguish definitive HTTP rejection from uncertain transport/server failure, normalize validation messages and reconcile exact responses. The interface preserves a pending request's original identity and note while allowing rejected input to be corrected.
 
-The 21 tests cover task continuity, absent evidence, repeated inputs, conflicting identities, future/ambiguous timestamps, delayed observations, operator response validation and transaction rollback. Run them locally with the command in the [README](../README.md).
+## Original data proof
 
-The next implementation milestone connects this tested foundation to a real Strands tool loop. The product demonstration will show the agent's actual tool calls beside the resulting task update.
+```bash
+python -m feasibility.fetch_data
+python -m feasibility.reconcile
+python -m feasibility.run_proof
+python -m unittest discover -s feasibility -p "test_*.py"
+```
+
+This downloads about 138 MB of public data and reconstructs the packets. Eight fresh processes exercise the case, evidence links and demonstration responses. Generated `proof.html`, traces, results and database establish the foundation through eleven assertions. [Replay guide](../feasibility/README.md).
