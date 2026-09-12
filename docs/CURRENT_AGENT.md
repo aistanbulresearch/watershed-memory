@@ -31,7 +31,7 @@ uv run --locked pytest tests/test_current_context.py tests/test_current_assessme
 
 These local tests execute the installed Strands SDK with a scripted provider and temporary source fixtures. The paired test supplies the same current interval before and after a simulated operator changes the plan: the fixture reads the actual tool results and targets the saved review. This proves SDK execution and context handling; model decision quality is a separate evaluation.
 
-The current adapter stages work for a future delivery service to validate and persist. The [current work ledger](CURRENT_WORK.md) provides durable human actions and evidence links. The [recorded browser walkthrough](https://aistanbulresearch.github.io/watershed-memory/) shows the separately executed historical Strands and AgentCore journey.
+The adapter stages work for the [current delivery journal](CURRENT_DELIVERY.md) to validate and persist with the source acknowledgment. The [current work ledger](CURRENT_WORK.md) provides durable human actions and evidence links. The [recorded browser walkthrough](https://aistanbulresearch.github.io/watershed-memory/) shows the separately executed historical Strands and AgentCore journey.
 
 - [Current Strands adapter](../watershed_memory/current/strands.py)
 - [Tools and exact trace validation](../watershed_memory/current/tools.py)

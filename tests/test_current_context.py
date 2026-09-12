@@ -10,6 +10,7 @@ import pytest
 from test_current_case_store import CASE, CONFIG, LATER, MONITOR, NOW, action, query, stage
 from test_current_case_store import ready as ready
 
+from watershed_memory.current.case_types import EvidenceLink
 from watershed_memory.current.context import load_context
 from watershed_memory.watch.store import MonitorConfig
 
@@ -212,3 +213,25 @@ def test_loader_queries_are_bounded_by_recent_evidence_and_interval_indexes(read
     load_context(store, CASE, events[1].event_id, evaluated_at=NOW)
     monkeypatch.setattr(store, "_connect", original)
     assert plans and not any("TEMP B-TREE" in plan or plan.startswith("SCAN ") for plan in plans)
+
+
+def test_correction_finds_its_exact_old_work_link_after_many_newer_links(ready):
+    path, store, _, events = ready
+    review = stage(store, events[0])
+    now = LATER + timedelta(hours=1)
+    for index in range(2, 9):
+        later = add_interval(path, 15 * index)
+        store.link_evidence(
+            CASE,
+            EvidenceLink(
+                review.task_id, later.event_id, "New evidence linked to the same active plan."
+            ),
+            request_id=f"later-{index}",
+            expected_case_revision=index - 1,
+            now=now,
+        )
+    correction = add_interval(path, 0, revision=2, supersedes=events[0].event_id)
+    context = load_context(store, CASE, correction.event_id, evaluated_at=now)
+    assert context.prior[0].event_id == events[0].event_id
+    # Indexed exact correction lookup must survive the recent-three-link retrieval bound.
+    assert context.review_evidence == ((review.task_id, (events[0].event_id,)),)

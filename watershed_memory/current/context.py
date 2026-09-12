@@ -123,55 +123,90 @@ def load_context(
     store: CaseStore, case_id: str, event_id: str, *, evaluated_at: datetime
 ) -> CurrentContext:
     """Load exact registered evidence and at most three relevant prior intervals."""
+    with store._connect() as db:
+        db.execute("BEGIN")
+        return _load_context(db, case_id, event_id, evaluated_at=evaluated_at)
+
+
+def _load_context(
+    db: sqlite3.Connection,
+    case_id: str,
+    event_id: str,
+    *,
+    evaluated_at: datetime,
+    prior_event_ids: tuple[str, ...] | None = None,
+    review_refs: tuple[tuple[str, int, tuple[str, ...]], ...] | None = None,
+    reserved_revision: int | None = None,
+) -> CurrentContext:
+    """Reconstruct a trusted snapshot inside the caller's transaction."""
+    if not db.in_transaction:
+        raise ValueError("context loading requires a caller transaction")
     _identifier(case_id, "case_id")
     validate_event_id(event_id)
     evaluated = utc(evaluated_at)
     registry = gallinas_registry()
-    with store._connect() as db:
-        db.execute("BEGIN")
-        case = rows.case_row(db, case_id)
-        config = _case_config(case)
+    if (review_refs is None) != (reserved_revision is None):
+        raise ValueError("reserved work and case revision must be supplied together")
+    if reserved_revision is not None:
+        _expected(reserved_revision)
+        if prior_event_ids is None:
+            raise ValueError("reserved context requires pinned prior evidence")
+    if prior_event_ids is not None:
+        if type(prior_event_ids) is not tuple or len(prior_event_ids) > 3:
+            raise ValueError("invalid pinned prior identities")
+        for identity in prior_event_ids:
+            validate_event_id(identity)
+        if event_id in prior_event_ids or len(set(prior_event_ids)) != len(prior_event_ids):
+            raise ValueError("duplicate pinned evidence")
+    case = rows.case_row(db, case_id)
+    config = _case_config(case)
+    if reserved_revision is None:
         rows.check_time(case, evaluated)
-        monitor_row = WatchStore._monitor(db, config.monitor_id)
-        monitor = WatchStore._config(monitor_row)
-        if (
-            (monitor.monitor_id, monitor.case_id, monitor.station_id)
-            != (
-                monitor_row["monitor_id"],
-                monitor_row["case_id"],
-                monitor_row["station_id"],
+    elif reserved_revision > case["revision"] or timestamp(case["created_at"]) > evaluated:
+        raise ValueError("reserved context predates its case or exceeds the current revision")
+    monitor_row = WatchStore._monitor(db, config.monitor_id)
+    monitor = WatchStore._config(monitor_row)
+    if (
+        (monitor.monitor_id, monitor.case_id, monitor.station_id)
+        != (
+            monitor_row["monitor_id"],
+            monitor_row["case_id"],
+            monitor_row["station_id"],
+        )
+        or monitor.start_at.isoformat() != monitor_row["start_at"]
+        or (not config.simulated and case_id != monitor.case_id)
+    ):
+        raise ValueError("stored monitor differs from case configuration")
+
+    cache: dict[str, IntervalFacts] = {}
+
+    def facts(identity: str) -> IntervalFacts:
+        if identity not in cache:
+            raw = db.execute(
+                "SELECT * FROM watch_events WHERE event_id=? AND monitor_id=?",
+                (identity, config.monitor_id),
+            ).fetchone()
+            if raw is None:
+                raise KeyError("source event is not in this case monitor")
+            item = WatchEvent(
+                raw["event_id"],
+                raw["monitor_id"],
+                raw["case_id"],
+                timestamp(raw["interval_start"]),
+                timestamp(raw["interval_end"]),
+                raw["revision"],
+                raw["supersedes_event_id"],
+                json.loads(raw["payload_json"]),
             )
-            or monitor.start_at.isoformat() != monitor_row["start_at"]
-            or (not config.simulated and case_id != monitor.case_id)
-        ):
-            raise ValueError("stored monitor differs from case configuration")
+            cache[identity] = inspect_interval(
+                item, monitor, registry, config.coverage_policy, evaluated_at=evaluated
+            )
+        return cache[identity]
 
-        cache: dict[str, IntervalFacts] = {}
-
-        def facts(identity: str) -> IntervalFacts:
-            if identity not in cache:
-                raw = db.execute(
-                    "SELECT * FROM watch_events WHERE event_id=? AND monitor_id=?",
-                    (identity, config.monitor_id),
-                ).fetchone()
-                if raw is None:
-                    raise KeyError("source event is not in this case monitor")
-                item = WatchEvent(
-                    raw["event_id"],
-                    raw["monitor_id"],
-                    raw["case_id"],
-                    timestamp(raw["interval_start"]),
-                    timestamp(raw["interval_end"]),
-                    raw["revision"],
-                    raw["supersedes_event_id"],
-                    json.loads(raw["payload_json"]),
-                )
-                cache[identity] = inspect_interval(
-                    item, monitor, registry, config.coverage_policy, evaluated_at=evaluated
-                )
-            return cache[identity]
-
-        current = facts(event_id)
+    current = facts(event_id)
+    if review_refs is not None:
+        active, links = _reserved_work(db, case_id, review_refs)
+    else:
         active = tuple(
             rows.record(row)
             for row in db.execute(
@@ -193,8 +228,28 @@ def load_context(
             )
             for review in active
         }
+    ancestor = current.supersedes_event_id
+    if ancestor is not None and review_refs is None:
+        for review in active:
+            supported = db.execute(
+                "SELECT 1 FROM current_review_evidence WHERE case_id=? AND task_id=? "
+                "AND event_id=? LIMIT 1",
+                (case_id, review.task_id, ancestor),
+            ).fetchone()
+            if supported:
+                links[review.task_id] = tuple(dict.fromkeys((ancestor, *links[review.task_id])))[:3]
 
-        # At most nine recent work links are inspected; rewinds never scan old work history.
+    if prior_event_ids is not None:
+        if (
+            current.supersedes_event_id is not None
+            and current.supersedes_event_id not in prior_event_ids
+        ):
+            raise ValueError("pinned correction snapshot lacks its direct ancestor")
+        selected = {identity: facts(identity) for identity in prior_event_ids}
+        if any(not compare_intervals(current, item).comparable for item in selected.values()):
+            raise ValueError("pinned evidence is not comparable")
+    else:
+        # At most nine work references: recent links plus an exact correction-basis lookup.
         linked = []
         for identity in dict.fromkeys(identity for ids in links.values() for identity in ids):
             if identity == event_id:
@@ -224,19 +279,54 @@ def load_context(
                 selected.setdefault(item.event_id, item)
             if len(selected) == 3:
                 break
-        allowlist = {event_id, *selected}
-        return CurrentContext(
-            case_id,
-            case["revision"],
-            case["policy_digest"],
-            config.simulated,
-            evaluated,
-            current,
-            tuple(selected.values()),
-            active,
-            tuple(
-                (task_id, tuple(identity for identity in ids if identity in allowlist))
-                for task_id, ids in links.items()
-            ),
-            registry,
-        )
+    allowlist = {event_id, *selected}
+    if review_refs is not None and any(
+        identity not in allowlist for ids in links.values() for identity in ids
+    ):
+        raise ValueError("reserved work evidence is outside the original context")
+    return CurrentContext(
+        case_id,
+        case["revision"] if reserved_revision is None else reserved_revision,
+        case["policy_digest"],
+        config.simulated,
+        evaluated,
+        current,
+        tuple(selected.values()),
+        active,
+        tuple(
+            (task_id, tuple(identity for identity in ids if identity in allowlist))
+            for task_id, ids in links.items()
+        ),
+        registry,
+    )
+
+
+def _reserved_work(db: sqlite3.Connection, case_id: str, references: tuple):
+    """Retrieve exact immutable review revisions and the originally allowed links."""
+    if type(references) is not tuple or len(references) > 3:
+        raise ValueError("invalid reserved work references")
+    active, links = [], {}
+    for reference in references:
+        if type(reference) is not tuple or len(reference) != 3:
+            raise ValueError("invalid reserved work reference")
+        task_id, revision, evidence = reference
+        _identifier(task_id, "task_id")
+        _expected(revision)
+        if revision == 0 or type(evidence) is not tuple or len(evidence) > 3:
+            raise ValueError("invalid reserved work revision or evidence")
+        for identity in evidence:
+            validate_event_id(identity)
+        if task_id in links or len(set(evidence)) != len(evidence):
+            raise ValueError("duplicate reserved work or evidence")
+        raw = db.execute(
+            "SELECT record_json FROM current_review_revisions WHERE case_id=? AND task_id=? AND revision=?",
+            (case_id, task_id, revision),
+        ).fetchone()
+        if raw is None:
+            raise KeyError("reserved work revision does not exist in this case")
+        review = rows.record(json.loads(raw["record_json"]))
+        if (review.task_id, review.case_id, review.revision) != (task_id, case_id, revision):
+            raise ValueError("reserved work record differs from its revision identity")
+        active.append(review)
+        links[task_id] = evidence
+    return tuple(active), links

@@ -185,46 +185,49 @@ class CaseStore:
             raise ValueError("expected an observation or coverage review draft")
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            case = rows.case_row(db, case_id)
-            encoded = self._input(case, "STAGE", draft, expected_case_revision)
-            saved = rows.prior_receipt(db, case_id, request_id, encoded)
-            if saved is not None:
-                return saved
-            rows.check_revision(case, expected_case_revision)
-            rows.check_time(case, now)
-            _future(draft.next_check_at, now)
-            active = db.execute(
-                "SELECT task_id FROM current_reviews WHERE case_id=? AND kind=? AND status IN "
-                + rows.ACTIVE,
-                (case_id, draft.kind),
-            ).fetchone()
-            if active:
-                raise WorkflowConflict(
-                    "link evidence to the existing review instead of duplicating it"
-                )
-            task_id = "review-" + uuid.uuid4().hex
-            due = draft.next_check_at.isoformat() if draft.next_check_at is not None else None
-            db.execute(
-                "INSERT INTO current_reviews(task_id,case_id,monitor_id,kind,status,revision,"
-                "title,reason,next_check_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
-                (
-                    task_id,
-                    case_id,
-                    case["monitor_id"],
-                    draft.kind,
-                    "PROPOSED",
-                    1,
-                    draft.title,
-                    draft.reason,
-                    due,
-                    now.isoformat(),
-                    now.isoformat(),
-                ),
+            return self._stage_review(
+                db, case_id, draft, request_id=request_id,
+                expected_case_revision=expected_case_revision, now=now,
             )
-            value = rows.record(rows.review_row(db, case_id, task_id))
-            rows.revision(db, value, "PROPOSAL", now)
-            rows.link(db, case, task_id, draft.event_id, now)
-            return rows.receipt(db, value, request_id, "STAGE", encoded, now)
+
+    def _stage_review(
+        self, db: sqlite3.Connection, case_id: str, draft: ReviewDraft, *,
+        request_id: str, expected_case_revision: int, now: datetime,
+    ) -> ReviewRecord:
+        if not db.in_transaction:
+            raise ValueError("stage_review requires an active transaction")
+        _identifier(case_id, "case_id")
+        _identifier(request_id, "request_id")
+        _expected(expected_case_revision)
+        now = utc(now)
+        if type(draft) is not ReviewDraft or draft.kind == "RESULT_VERIFICATION":
+            raise ValueError("expected an observation or coverage review draft")
+        case = rows.case_row(db, case_id)
+        encoded = self._input(case, "STAGE", draft, expected_case_revision)
+        saved = rows.prior_receipt(db, case_id, request_id, encoded)
+        if saved is not None:
+            return saved
+        rows.check_revision(case, expected_case_revision)
+        rows.check_time(case, now)
+        _future(draft.next_check_at, now)
+        active = db.execute(
+            "SELECT task_id FROM current_reviews WHERE case_id=? AND kind=? AND status IN "
+            + rows.ACTIVE, (case_id, draft.kind),
+        ).fetchone()
+        if active:
+            raise WorkflowConflict("link evidence to the existing review instead of duplicating it")
+        task_id = "review-" + uuid.uuid4().hex
+        due = draft.next_check_at.isoformat() if draft.next_check_at is not None else None
+        db.execute(
+            "INSERT INTO current_reviews(task_id,case_id,monitor_id,kind,status,revision,"
+            "title,reason,next_check_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+            (task_id, case_id, case["monitor_id"], draft.kind, "PROPOSED", 1,
+             draft.title, draft.reason, due, now.isoformat(), now.isoformat()),
+        )
+        value = rows.record(rows.review_row(db, case_id, task_id))
+        rows.revision(db, value, "PROPOSAL", now)
+        rows.link(db, case, task_id, draft.event_id, now)
+        return rows.receipt(db, value, request_id, "STAGE", encoded, now)
 
     def link_evidence(
         self,
@@ -243,18 +246,35 @@ class CaseStore:
             raise ValueError("expected an evidence link")
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
-            case = rows.case_row(db, case_id)
-            encoded = self._input(case, "LINK", link, expected_case_revision)
-            saved = rows.prior_receipt(db, case_id, request_id, encoded)
-            if saved is not None:
-                return saved
-            rows.check_revision(case, expected_case_revision)
-            rows.check_time(case, now)
-            value = rows.record(rows.review_row(db, case_id, link.task_id))
-            if value.status not in ("PROPOSED", "APPROVED", "DEFERRED"):
-                raise WorkflowConflict("terminal work cannot receive new evidence implicitly")
-            rows.link(db, case, value.task_id, link.event_id, now)
-            return rows.receipt(db, value, request_id, "LINK", encoded, now)
+            return self._link_evidence(
+                db, case_id, link, request_id=request_id,
+                expected_case_revision=expected_case_revision, now=now,
+            )
+
+    def _link_evidence(
+        self, db: sqlite3.Connection, case_id: str, link: EvidenceLink, *,
+        request_id: str, expected_case_revision: int, now: datetime,
+    ) -> ReviewRecord:
+        if not db.in_transaction:
+            raise ValueError("link_evidence requires an active transaction")
+        _identifier(case_id, "case_id")
+        _identifier(request_id, "request_id")
+        _expected(expected_case_revision)
+        now = utc(now)
+        if type(link) is not EvidenceLink:
+            raise ValueError("expected an evidence link")
+        case = rows.case_row(db, case_id)
+        encoded = self._input(case, "LINK", link, expected_case_revision)
+        saved = rows.prior_receipt(db, case_id, request_id, encoded)
+        if saved is not None:
+            return saved
+        rows.check_revision(case, expected_case_revision)
+        rows.check_time(case, now)
+        value = rows.record(rows.review_row(db, case_id, link.task_id))
+        if value.status not in ("PROPOSED", "APPROVED", "DEFERRED"):
+            raise WorkflowConflict("terminal work cannot receive new evidence implicitly")
+        rows.link(db, case, value.task_id, link.event_id, now)
+        return rows.receipt(db, value, request_id, "LINK", encoded, now)
 
     def act(
         self, case_id: str, action: HumanAction, *, request_id: str, now: datetime
