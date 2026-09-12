@@ -46,6 +46,8 @@ A crashed process leaves a claim for up to five minutes. An expired claim can be
 
 The planner receives copies of case state and released packets. Tools stage proposals. The service builds the saved state itself: direct planner mutation, forged targets, missing actions and inconsistent tool results are rejected. Model/tool failure leaves the saved case unchanged.
 
+The live workspace also keeps its invocation allowance in SQLite. An atomic reservation commits before the wrapped planner runs, so restarts and failed or interrupted calls cannot reset the counter. The transaction closes before inference. A previously committed request returns from the receipt ledger before it reaches this counter. Reopening an allowance with a changed limit is rejected; a new named allowance is an explicit operator configuration choice.
+
 ## Memory across Runtime sessions
 
 Each AgentCore turn starts a fresh Runtime session. Its input contains the released observation packets, existing tasks and operator action metadata. Operator notes and actor names stay in the local case ledger. The Runtime returns a proposal with its tool trace; the local service independently validates and commits it. A new Runtime session therefore picks up the work from the same durable case.
@@ -63,6 +65,7 @@ The transport binds the response to the request ID, case revision, state hash an
 | Pinned Runtime invocation | [agentcore_client.py](../watershed_memory/agentcore_client.py) |
 | Cloud entry point and artifact builder | [runtime](../runtime/) / [deployment](../deployment/) |
 | Sessions, claims and receipts | [service.py](../watershed_memory/service.py) |
+| Durable live invocation allowance | [persistent_budget.py](../watershed_memory/persistent_budget.py) |
 | HTTP and static serving | [api.py](../watershed_memory/api.py) |
 | Operator experience | [static](../watershed_memory/static/) |
 | Original reconciliation | [reconcile.py](../feasibility/reconcile.py) |

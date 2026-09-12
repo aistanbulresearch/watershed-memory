@@ -12,7 +12,7 @@ from watershed_memory.planning import ReplayPlanner
 from watershed_memory.service import Service
 
 
-def test_live_configuration_requires_explicit_account_and_never_silently_falls_back():
+def test_live_configuration_requires_explicit_account_and_never_silently_falls_back(tmp_path):
     def forbidden_lookup(*_args):
         raise AssertionError("Replay and incomplete arguments must not contact AWS.")
 
@@ -20,11 +20,35 @@ def test_live_configuration_requires_explicit_account_and_never_silently_falls_b
     with pytest.raises(ValueError, match="explicit model"):
         configured_planner(parser().parse_args(["--provider", "bedrock"]), forbidden_lookup)
     args = parser().parse_args(["--provider", "bedrock", "--expected-account", "123456789012",
-                               "--region", "us-east-1", "--model-id", "amazon.nova-pro-v1:0"])
+                               "--region", "us-east-1", "--model-id", "amazon.nova-pro-v1:0",
+                               "--database", str(tmp_path / "configured.sqlite")])
     with pytest.raises(ValueError, match="account does not match"):
         configured_planner(args, lambda *_args: "999999999999")
     selected = configured_planner(args, lambda *_args: "123456789012")
     assert selected.mode["agent_enabled"] is True and selected.limit == 6
+
+
+def test_cli_live_allowance_survives_server_reconfiguration(tmp_path, monkeypatch):
+    monkeypatch.setattr("watershed_memory.strands_agent.bedrock_planner",
+                        lambda *_args: ReplayPlanner())
+    args = parser().parse_args(["--provider", "bedrock", "--expected-account", "123456789012",
+        "--region", "us-east-1", "--model-id", "amazon.nova-pro-v1:0",
+        "--database", str(tmp_path / "persistent-cli.sqlite"), "--live-turn-limit", "1",
+        "--live-budget-scope", "judge-rehearsal"])
+    first = configured_planner(args, lambda *_args: "123456789012")
+    service = Service(args.database, first)
+    session = service.create_session()["session_id"]
+    saved = service.advance(session, "first")
+    restarted = configured_planner(args, lambda *_args: "123456789012")
+    resumed = Service(args.database, restarted)
+    assert restarted.attempts == 1
+    assert resumed.advance(session, "first") == saved
+    with pytest.raises(DemoBudgetExhausted):
+        resumed.advance(session, "second")
+    assert resumed.snapshot(session) == saved
+    args.live_turn_limit = 2
+    with pytest.raises(ValueError, match="incompatible|limit|corrupt"):
+        configured_planner(args, lambda *_args: "123456789012")
 
 
 def test_live_allowance_is_shared_across_sessions_and_retry_receipts_cost_nothing(tmp_path):
