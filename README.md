@@ -12,6 +12,8 @@ Every new observation arrives alongside earlier measurements, unfinished reviews
 
 Built by **AIstanbul Research Group** for the **Agents for Humans Hackathon**, Professional Agents track.
 
+**[Watch the verified cloud run](https://aistanbulresearch.github.io/watershed-memory/)** — four recorded moments, one enduring case, with the actual Strands tool receipts available to inspect.
+
 ### Try the operator workspace
 
 With [uv](https://docs.astral.sh/uv/) and Python 3.12:
@@ -37,9 +39,9 @@ The workspace identifies **historical replay · rules**. Operator responses are 
 
 The Strands integration exposes three bounded tools: read saved case context, retrieve a released observation window, and propose a review against an explicitly selected unfinished task. The service validates the work and its evidence before committing the turn. A model cannot write an operator response or declare the watershed recovered.
 
-The installed SDK is tested through its actual model/tool protocol, including context-dependent task selection and failure handling. A separate command runs the three-case gate against real Bedrock credentials and saves call, usage, tool and persistence evidence. [Run the Strands gate](docs/ENGINEERING.md#real-strands-gate).
+**Real Strands execution has passed all three feasibility cases:** unfinished work, acknowledged work with missing evidence, and new work after completion. The gate records tool choices, usage, duplicate handling and fresh-process persistence. [Run the Strands gate](docs/ENGINEERING.md#real-strands-gate).
 
-**A fresh AgentCore session can receive the same enduring case.** The Runtime adapter, strict proposal contract and instrumented deployment package are implemented with local protocol tests. Cloud execution is a separate acceptance checkpoint. [Explore the Runtime boundary](docs/AGENTCORE.md).
+**AgentCore runs the agent. The case carries the memory.** The verified cloud run uses two separate Runtime sessions: August continues the same review; September preserves its acknowledgment and opens a separate evidence-gap review. Both repeated requests return saved receipts without another invocation. The case restores identically in a fresh process. [Inspect the verified run](docs/VERIFIED_RUN.md) · [Explore the Runtime boundary](docs/AGENTCORE.md).
 
 ### Engineering worth opening
 
@@ -57,11 +59,11 @@ The installed SDK is tested through its actual model/tool protocol, including co
 ```bash
 uv run pytest -q
 node --test tests/request-state.test.mjs
-uv run ruff check watershed_memory tests runtime deployment feasibility/run_strands.py
+uv run ruff check watershed_memory tests runtime deployment feasibility/run_strands.py feasibility/run_agentcore.py feasibility/export_evidence.py
 python -m unittest discover -s feasibility -p "test_*.py"
 ```
 
-Product tests cover the HTTP journey, isolation, failure atomicity, adversarial planner output, request claims and the Strands SDK protocol. The original proof remains reproducible, with **21 tests and 11 checks across eight fresh processes**. [Original replay guide](feasibility/README.md).
+**113 Python tests** cover the HTTP journey, isolation, failure atomicity, adversarial planner output, request claims, Strands/AgentCore protocols and public evidence export. JavaScript request-state checks cover recovery after a lost response. The original proof remains reproducible, with **21 tests and 11 checks across eight fresh processes**. [Original replay guide](feasibility/README.md).
 
 ### License
 

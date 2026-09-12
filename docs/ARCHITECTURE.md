@@ -24,7 +24,7 @@ flowchart LR
     Response --> DB
 ```
 
-The default browser experience uses historical rules replay. Select Bedrock to run the Strands planner directly, or AgentCore to invoke a pinned Runtime endpoint. Every mode uses the same case service. The AgentCore adapter and deployment package are implemented and tested locally; cloud execution is its own acceptance gate. [Runtime boundary and deployment](AGENTCORE.md).
+The default local workspace uses historical rules replay. Select Bedrock to run the Strands planner directly, or AgentCore to invoke a pinned Runtime endpoint. Every mode uses the same case service. Real execution has passed the direct Strands cases, the two-session AgentCore gate and the operator browser journey. The public walkthrough displays a labelled recording of that cloud gate. [Verified run](VERIFIED_RUN.md) · [Runtime boundary and deployment](AGENTCORE.md).
 
 ## Decision boundaries
 

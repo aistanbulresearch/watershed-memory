@@ -21,7 +21,9 @@ sequenceDiagram
     Case-->>Operator: Updated review and supporting evidence
 ```
 
-The diagram describes the implemented transport. Local tests use the real Strands and AgentCore server protocols with an explicitly scripted model and fake AWS transport. A recorded cloud invocation establishes deployed behavior separately.
+This transport has executed on AgentCore. In the verified September 12 run, August and September used separate Runtime sessions, retained one review, preserved the operator acknowledgment and opened a separate gap review. Duplicate requests did not invoke again, and a fresh process restored the same case. [Open the execution evidence](VERIFIED_RUN.md).
+
+The current verified build uses Strands 1.55.1, Amazon Nova Pro, instruction `watershed-review-v3` and named endpoint `proof_v2` pinned to Runtime version 2. Memory lives in the external case ledger. AgentCore Runtime supplies the bounded execution environment; AgentCore-native Memory is not required for this workflow.
 
 ## Run a bounded live workspace
 
@@ -34,7 +36,7 @@ uv run watershed-memory --provider bedrock --profile YOUR_PROFILE --expected-acc
 For a deployed Runtime, supply its ARN, a named endpoint and the version you reviewed:
 
 ```bash
-uv run watershed-memory --provider agentcore --profile YOUR_PROFILE --expected-account YOUR_ACCOUNT_ID --region us-east-1 --model-id amazon.nova-pro-v1:0 --runtime-arn YOUR_RUNTIME_ARN --runtime-endpoint proof_v1 --runtime-version YOUR_VERIFIED_RUNTIME_VERSION --database .local/runtime/agentcore.sqlite --live-turn-limit 6
+uv run watershed-memory --provider agentcore --profile YOUR_PROFILE --expected-account YOUR_ACCOUNT_ID --region us-east-1 --model-id amazon.nova-pro-v1:0 --runtime-arn YOUR_RUNTIME_ARN --runtime-endpoint YOUR_NAMED_ENDPOINT --runtime-version YOUR_VERIFIED_RUNTIME_VERSION --database .local/runtime/agentcore.sqlite --live-turn-limit 6
 ```
 
 The workspace always binds to loopback. The live-turn allowance is shared across browser sessions in that server process and counts failed attempts. Restarting the server resets this demonstration allowance; it is not an account billing cap. Each Strands turn also has its own call, output and time limits. Historical rules replay is the default when no provider is specified.
@@ -57,8 +59,10 @@ The builder checks native ELF architecture, rejects host binaries and private pa
 
 Verify that Runtime metadata requires MMDSv2 before invocation. If the explicit metadata phase updates the Runtime, AWS creates a new version. Use the returned and subsequently verified version when creating the named endpoint and starting the workspace.
 
+For a source revision, `deployment.revise_runtime` verifies the previous configuration, allows the exact old and new artifact keys, updates the existing Runtime and creates a new version-pinned endpoint. It preserves earlier endpoints and artifacts so the original execution remains attributable to its original build.
+
 ## Follow the execution
 
-The local receipt includes the tool trace, model and instruction versions, call count, aggregate token usage, verified Runtime endpoint version, AWS request identifiers when returned, and the session-stop request result. The Runtime emits structured correlation logs and is launched with AWS OpenTelemetry instrumentation. Searchable AgentCore spans additionally require the AWS account's CloudWatch Transaction Search configuration.
+The local receipt includes the tool trace, model and instruction versions, call count, aggregate token usage, verified Runtime endpoint version, AWS request identifiers when returned, and the session-stop request result. The Runtime emits structured correlation logs and is launched with AWS OpenTelemetry instrumentation. Request and evidence hashes have been correlated with scoped Runtime logs. The public trace exports only permitted tool fields and execution metadata; private log records and model text are excluded. Full account-wide span search additionally requires CloudWatch Transaction Search configuration.
 
 [AWS CodeZip deployment](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-get-started-code-deploy-python.html) · [Runtime permissions](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-permissions.html) · [Observability setup](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/observability-configure.html)

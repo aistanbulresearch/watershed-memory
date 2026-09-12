@@ -1,0 +1,972 @@
+{
+  "schema_version": 1,
+  "title": "Three storms. One memory.",
+  "recorded_at": "2026-09-12T06:07:24.743923+00:00",
+  "execution": "RECORDED_AGENTCORE_STRANDS",
+  "code": {
+    "source_commit": "83b07fc1d9286431a1726b2e1f14bc7a198d5c5b",
+    "artifact_sha256": "7a3b53f641ef67c910538418d5ec66fd764d1aa1e37f2c4b67442a45d998b01a",
+    "source_comparison": "Git source matches after LF normalization; the SHA-256 identifies the exact reviewed artifact."
+  },
+  "checks": {
+    "two_distinct_runtime_sessions": true,
+    "exactly_two_planner_turns": true,
+    "fresh_process_persistence": true,
+    "august_requested_execution_mode": true,
+    "august_exact_turn_allowance": true,
+    "august_same_review": true,
+    "august_linked_evidence_count": true,
+    "august_operator_responses_preserved": true,
+    "august_case_remains_open": true,
+    "august_water_safety_unassessed": true,
+    "august_session_stop_requested": true,
+    "august_duplicate_receipt": true,
+    "august_duplicate_did_not_invoke": true,
+    "august_one_open_monitoring_review": true,
+    "september_requested_execution_mode": true,
+    "september_exact_turn_allowance": true,
+    "september_same_review": true,
+    "september_linked_evidence_count": true,
+    "september_operator_responses_preserved": true,
+    "september_case_remains_open": true,
+    "september_water_safety_unassessed": true,
+    "september_session_stop_requested": true,
+    "september_duplicate_receipt": true,
+    "september_duplicate_did_not_invoke": true,
+    "september_acknowledged_review_and_separate_gap": true
+  },
+  "steps": [
+    {
+      "id": "july",
+      "title": "July \u00b7 the review opens",
+      "caption": "July's observations open the source-water monitoring review.",
+      "execution_label": "Historical rules setup \u00b7 recorded state",
+      "snapshot": {
+        "case": {
+          "id": "GALLINAS-HPCC-2022",
+          "title": "Gallinas River",
+          "subtitle": "New Mexico \u00b7 Source-water watch",
+          "status": "OPEN",
+          "coverage": "LIMITED",
+          "water_safety": "NOT_ASSESSED"
+        },
+        "tasks": [
+          {
+            "kind": "MONITORING_REVIEW",
+            "status": "OPEN",
+            "title": "Review continuing watershed observations",
+            "reason": "New P2 observations warrant source-water review. Carry their evidence forward with the current unfinished review, or start a new review after completed work.",
+            "evidence": [
+              "gallinas-2022-07-09-72h-v1"
+            ],
+            "id": "R-01"
+          }
+        ],
+        "responses": [],
+        "progress": {
+          "processed": 1,
+          "total": 3,
+          "next_label": "August 3 observations"
+        },
+        "events": [
+          {
+            "id": "gallinas-2022-07-09-72h-v1",
+            "label": "July 9",
+            "date": "2022-07-09",
+            "processed": true,
+            "p1_count": 288,
+            "p2_count": 284,
+            "flow_peak_cfs": 689.0
+          },
+          {
+            "id": "gallinas-2022-08-03-72h-v1",
+            "label": "August 3",
+            "date": "2022-08-03",
+            "processed": false,
+            "p1_count": null,
+            "p2_count": null,
+            "flow_peak_cfs": null
+          },
+          {
+            "id": "gallinas-2022-09-10-72h-v1",
+            "label": "September 10",
+            "date": "2022-09-10",
+            "processed": false,
+            "p1_count": null,
+            "p2_count": null,
+            "flow_peak_cfs": null
+          }
+        ],
+        "latest_brief": {
+          "headline": "The first review is in motion",
+          "summary": "July's observations now have a place in the source-water case.",
+          "changes": [
+            "Source-water monitoring review opened."
+          ]
+        },
+        "sources": [
+          {
+            "label": "Gallinas field archive \u00b7 CC BY 4.0",
+            "url": "https://doi.org/10.5281/zenodo.12762324"
+          },
+          {
+            "label": "USGS gauge 08380500",
+            "url": "https://waterdata.usgs.gov/monitoring-location/USGS-08380500/"
+          }
+        ],
+        "trace": [
+          {
+            "tool": "get_case_context",
+            "input": {},
+            "output": {
+              "case": {
+                "id": "GALLINAS-HPCC-2022",
+                "title": "Gallinas River",
+                "subtitle": "New Mexico \u00b7 Source-water watch",
+                "status": "OPEN",
+                "coverage": "UNKNOWN",
+                "water_safety": "NOT_ASSESSED"
+              },
+              "tasks": [],
+              "responses": [],
+              "released_event_ids": [
+                "gallinas-2022-07-09-72h-v1"
+              ],
+              "current_event_id": "gallinas-2022-07-09-72h-v1"
+            }
+          },
+          {
+            "tool": "get_observations",
+            "input": {
+              "event_id": "gallinas-2022-07-09-72h-v1"
+            },
+            "output": {
+              "event_id": "gallinas-2022-07-09-72h-v1",
+              "evidence_class": "HISTORICAL_ARCHIVE_REPLAY",
+              "available_at": "2022-07-11T06:00:00+00:00",
+              "availability_basis": "SIMULATED: window end; historical publication/telemetry latency unknown",
+              "observations_end": "2022-07-11T06:00:00+00:00",
+              "p2_turbidity_count": 284,
+              "p1_turbidity_count": 288,
+              "source_ids": [
+                "zenodo:12764157",
+                "USGS:08380500:00060"
+              ],
+              "rainfall_status": "NO_RETRIEVED_OBSERVATIONS",
+              "timezone_status": "ARCHIVE_INFERRED_MDT_NOT_AUTHOR_CONFIRMED",
+              "summary": {
+                "date": "2022-07-09",
+                "window_start_assumed_MDT": "2022-07-08T00:00:00-06:00",
+                "window_end_exclusive_assumed_MDT": "2022-07-11T00:00:00-06:00",
+                "window_hours": 72,
+                "stations": {
+                  "P1": {
+                    "window_turbidity": {
+                      "rows": 288,
+                      "numeric_entries": 288,
+                      "minimum": 45.45013089,
+                      "maximum": 1178.524974,
+                      "peak_time": "2022-07-10T00:00:00-06:00"
+                    },
+                    "day_turbidity": {
+                      "rows": 96,
+                      "numeric_entries": 96,
+                      "minimum": 46.7158377,
+                      "maximum": 996.303089,
+                      "peak_time": "2022-07-09T23:00:00-06:00"
+                    }
+                  },
+                  "P2": {
+                    "window_turbidity": {
+                      "rows": 288,
+                      "numeric_entries": 284,
+                      "minimum": 3.955952381,
+                      "maximum": 1309.662857,
+                      "peak_time": "2022-07-10T15:30:00-06:00"
+                    },
+                    "day_turbidity": {
+                      "rows": 96,
+                      "numeric_entries": 96,
+                      "minimum": 3.955952381,
+                      "maximum": 856.902619,
+                      "peak_time": "2022-07-09T19:45:00-06:00"
+                    }
+                  },
+                  "P3": {
+                    "window_turbidity": {
+                      "rows": 288,
+                      "numeric_entries": 0,
+                      "minimum": null,
+                      "maximum": null,
+                      "peak_time": null
+                    },
+                    "day_turbidity": {
+                      "rows": 96,
+                      "numeric_entries": 0,
+                      "minimum": null,
+                      "maximum": null,
+                      "peak_time": null
+                    }
+                  }
+                },
+                "flow_usgs_cfs": {
+                  "window": {
+                    "rows": 288,
+                    "numeric_entries": 288,
+                    "minimum": 28.7,
+                    "maximum": 689.0,
+                    "peak_time": "2022-07-09T21:30:00-06:00"
+                  },
+                  "day": {
+                    "rows": 96,
+                    "numeric_entries": 96,
+                    "minimum": 28.7,
+                    "maximum": 689.0,
+                    "peak_time": "2022-07-09T21:30:00-06:00"
+                  }
+                },
+                "rain_usgs_inches": {
+                  "window": {
+                    "rows": 0,
+                    "numeric_entries": 0,
+                    "minimum": null,
+                    "maximum": null,
+                    "peak_time": null
+                  },
+                  "day": {
+                    "rows": 0,
+                    "numeric_entries": 0,
+                    "minimum": null,
+                    "maximum": null,
+                    "peak_time": null
+                  }
+                },
+                "flow_day_peak_m3s": 19.510307301888,
+                "flow_window_peak_m3s": 19.510307301888,
+                "rainfall_status": "NO_RETRIEVED_OBSERVATIONS"
+              }
+            }
+          },
+          {
+            "tool": "propose_review",
+            "input": {
+              "kind": "MONITORING_REVIEW",
+              "event_id": "gallinas-2022-07-09-72h-v1",
+              "reason": "New P2 observations warrant source-water review. Carry their evidence forward with the current unfinished review, or start a new review after completed work.",
+              "existing_task_id": null
+            },
+            "output": {
+              "status": "STAGED",
+              "operation": "CREATE_REVIEW",
+              "committed": false,
+              "task_id": null
+            }
+          },
+          {
+            "tool": "commit_case_turn",
+            "input": {
+              "event_id": "gallinas-2022-07-09-72h-v1"
+            },
+            "output": {
+              "status": "COMMITTED",
+              "changes": [
+                "Source-water monitoring review opened."
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "august",
+      "title": "August \u00b7 the same work continues",
+      "caption": "A fresh cloud session adds August's evidence to the same unfinished review.",
+      "execution_label": "Recorded Strands execution on AgentCore",
+      "snapshot": {
+        "case": {
+          "id": "GALLINAS-HPCC-2022",
+          "title": "Gallinas River",
+          "subtitle": "New Mexico \u00b7 Source-water watch",
+          "status": "OPEN",
+          "coverage": "LIMITED",
+          "water_safety": "NOT_ASSESSED"
+        },
+        "tasks": [
+          {
+            "kind": "MONITORING_REVIEW",
+            "status": "OPEN",
+            "title": "Review continuing watershed observations",
+            "reason": "New P2 observations warrant source-water review. Carry their evidence forward with the current unfinished review, or start a new review after completed work.",
+            "evidence": [
+              "gallinas-2022-07-09-72h-v1",
+              "gallinas-2022-08-03-72h-v1"
+            ],
+            "id": "R-01"
+          }
+        ],
+        "responses": [],
+        "progress": {
+          "processed": 2,
+          "total": 3,
+          "next_label": "September 10 observations"
+        },
+        "events": [
+          {
+            "id": "gallinas-2022-07-09-72h-v1",
+            "label": "July 9",
+            "date": "2022-07-09",
+            "processed": true,
+            "p1_count": 288,
+            "p2_count": 284,
+            "flow_peak_cfs": 689.0
+          },
+          {
+            "id": "gallinas-2022-08-03-72h-v1",
+            "label": "August 3",
+            "date": "2022-08-03",
+            "processed": true,
+            "p1_count": 288,
+            "p2_count": 864,
+            "flow_peak_cfs": 1050.0
+          },
+          {
+            "id": "gallinas-2022-09-10-72h-v1",
+            "label": "September 10",
+            "date": "2022-09-10",
+            "processed": false,
+            "p1_count": null,
+            "p2_count": null,
+            "flow_peak_cfs": null
+          }
+        ],
+        "latest_brief": {
+          "headline": "The next event. The same unfinished work.",
+          "summary": "August's evidence joins the case without losing earlier work or responses.",
+          "changes": [
+            "New evidence linked to the existing review."
+          ]
+        },
+        "sources": [
+          {
+            "label": "Gallinas field archive \u00b7 CC BY 4.0",
+            "url": "https://doi.org/10.5281/zenodo.12762324"
+          },
+          {
+            "label": "USGS gauge 08380500",
+            "url": "https://waterdata.usgs.gov/monitoring-location/USGS-08380500/"
+          }
+        ],
+        "trace": [
+          {
+            "tool": "get_case_context",
+            "input": {},
+            "output": {
+              "case": {
+                "id": "GALLINAS-HPCC-2022",
+                "title": "Gallinas River",
+                "subtitle": "New Mexico \u00b7 Source-water watch",
+                "status": "OPEN",
+                "coverage": "LIMITED",
+                "water_safety": "NOT_ASSESSED"
+              },
+              "tasks": [
+                {
+                  "kind": "MONITORING_REVIEW",
+                  "status": "OPEN",
+                  "title": "Review continuing watershed observations",
+                  "reason": "New P2 observations warrant source-water review. Carry their evidence forward with the current unfinished review, or start a new review after completed work.",
+                  "evidence": [
+                    "gallinas-2022-07-09-72h-v1"
+                  ],
+                  "id": "R-01"
+                }
+              ],
+              "responses": [],
+              "released_event_ids": [
+                "gallinas-2022-07-09-72h-v1",
+                "gallinas-2022-08-03-72h-v1"
+              ],
+              "current_event_id": "gallinas-2022-08-03-72h-v1"
+            }
+          },
+          {
+            "tool": "get_observations",
+            "input": {
+              "event_id": "gallinas-2022-08-03-72h-v1"
+            },
+            "output": {
+              "event_id": "gallinas-2022-08-03-72h-v1",
+              "evidence_class": "HISTORICAL_ARCHIVE_REPLAY",
+              "available_at": "2022-08-05T06:00:00+00:00",
+              "availability_basis": "SIMULATED: window end; historical publication/telemetry latency unknown",
+              "observations_end": "2022-08-05T06:00:00+00:00",
+              "p2_turbidity_count": 864,
+              "p1_turbidity_count": 288,
+              "source_ids": [
+                "zenodo:12764157",
+                "USGS:08380500:00060",
+                "USGS:08380500:00045"
+              ],
+              "rainfall_status": "POINT_GAUGE_OBSERVATIONS_AVAILABLE",
+              "timezone_status": "ARCHIVE_INFERRED_MDT_NOT_AUTHOR_CONFIRMED",
+              "summary": {
+                "date": "2022-08-03",
+                "window_start_assumed_MDT": "2022-08-02T00:00:00-06:00",
+                "window_end_exclusive_assumed_MDT": "2022-08-05T00:00:00-06:00",
+                "window_hours": 72,
+                "stations": {
+                  "P1": {
+                    "window_turbidity": {
+                      "rows": 288,
+                      "numeric_entries": 288,
+                      "minimum": 37.69404922,
+                      "maximum": 1044.615839,
+                      "peak_time": "2022-08-04T21:15:00-06:00"
+                    },
+                    "day_turbidity": {
+                      "rows": 96,
+                      "numeric_entries": 96,
+                      "minimum": 37.69404922,
+                      "maximum": 903.2267785,
+                      "peak_time": "2022-08-03T19:45:00-06:00"
+                    }
+                  },
+                  "P2": {
+                    "window_turbidity": {
+                      "rows": 864,
+                      "numeric_entries": 864,
+                      "minimum": 63.99,
+                      "maximum": 1561.41,
+                      "peak_time": "2022-08-02T00:00:00-06:00"
+                    },
+                    "day_turbidity": {
+                      "rows": 288,
+                      "numeric_entries": 288,
+                      "minimum": 63.99,
+                      "maximum": 687.46,
+                      "peak_time": "2022-08-03T22:15:00-06:00"
+                    }
+                  },
+                  "P3": {
+                    "window_turbidity": {
+                      "rows": 288,
+                      "numeric_entries": 288,
+                      "minimum": 158.285,
+                      "maximum": 1649.065,
+                      "peak_time": "2022-08-02T13:15:00-06:00"
+                    },
+                    "day_turbidity": {
+                      "rows": 96,
+                      "numeric_entries": 96,
+                      "minimum": 167.23,
+                      "maximum": 302.71,
+                      "peak_time": "2022-08-03T00:00:00-06:00"
+                    }
+                  }
+                },
+                "flow_usgs_cfs": {
+                  "window": {
+                    "rows": 864,
+                    "numeric_entries": 864,
+                    "minimum": 61.3,
+                    "maximum": 1050.0,
+                    "peak_time": "2022-08-03T17:20:00-06:00"
+                  },
+                  "day": {
+                    "rows": 288,
+                    "numeric_entries": 288,
+                    "minimum": 61.3,
+                    "maximum": 1050.0,
+                    "peak_time": "2022-08-03T17:20:00-06:00"
+                  }
+                },
+                "rain_usgs_inches": {
+                  "window": {
+                    "rows": 864,
+                    "numeric_entries": 864,
+                    "minimum": 0.0,
+                    "maximum": 0.01,
+                    "peak_time": "2022-08-02T19:20:00-06:00"
+                  },
+                  "day": {
+                    "rows": 288,
+                    "numeric_entries": 288,
+                    "minimum": 0.0,
+                    "maximum": 0.01,
+                    "peak_time": "2022-08-03T09:30:00-06:00"
+                  }
+                },
+                "flow_day_peak_m3s": 29.7326889216,
+                "flow_window_peak_m3s": 29.7326889216,
+                "rainfall_status": "POINT_GAUGE_OBSERVATIONS_AVAILABLE"
+              }
+            }
+          },
+          {
+            "tool": "propose_review",
+            "input": {
+              "kind": "MONITORING_REVIEW",
+              "event_id": "gallinas-2022-08-03-72h-v1",
+              "reason": "New P2 observations warrant source-water review. Carry their evidence forward with the current unfinished review, or start a new review after completed work.",
+              "existing_task_id": "R-01"
+            },
+            "output": {
+              "status": "STAGED",
+              "operation": "LINK_EVIDENCE",
+              "committed": false,
+              "task_id": "R-01"
+            }
+          },
+          {
+            "tool": "strands_turn",
+            "input": {
+              "instruction_version": "watershed-review-v3",
+              "model_id": "amazon.nova-pro-v1:0",
+              "sdk_version": "1.55.1",
+              "scripted_test": false
+            },
+            "output": {
+              "model_calls": 4,
+              "elapsed_seconds": 4.989,
+              "stop_reason": "end_turn",
+              "usage": {
+                "inputTokens": 8885,
+                "outputTokens": 552,
+                "totalTokens": 9437
+              },
+              "agentcore": {
+                "qualifier": "proof_v2",
+                "endpoint_version_verified_before_call": "2",
+                "stop_status": "STOP_REQUEST_ACCEPTED",
+                "runtime_session_alias": "Runtime session 1"
+              }
+            }
+          },
+          {
+            "tool": "commit_case_turn",
+            "input": {
+              "event_id": "gallinas-2022-08-03-72h-v1"
+            },
+            "output": {
+              "status": "COMMITTED",
+              "changes": [
+                "New evidence linked to the existing review."
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "operator",
+      "title": "The operator takes ownership",
+      "caption": "The demonstration operator acknowledges the review. This response belongs to the saved case.",
+      "execution_label": "Recorded demonstration operator action",
+      "snapshot": {
+        "case": {
+          "id": "GALLINAS-HPCC-2022",
+          "title": "Gallinas River",
+          "subtitle": "New Mexico \u00b7 Source-water watch",
+          "status": "OPEN",
+          "coverage": "LIMITED",
+          "water_safety": "NOT_ASSESSED"
+        },
+        "tasks": [
+          {
+            "kind": "MONITORING_REVIEW",
+            "status": "ACKNOWLEDGED",
+            "title": "Review continuing watershed observations",
+            "reason": "New P2 observations warrant source-water review. Carry their evidence forward with the current unfinished review, or start a new review after completed work.",
+            "evidence": [
+              "gallinas-2022-07-09-72h-v1",
+              "gallinas-2022-08-03-72h-v1"
+            ],
+            "id": "R-01"
+          }
+        ],
+        "responses": [
+          {
+            "action": "acknowledge",
+            "simulated": true,
+            "task_id": "R-01"
+          }
+        ],
+        "progress": {
+          "processed": 2,
+          "total": 3,
+          "next_label": "September 10 observations"
+        },
+        "events": [
+          {
+            "id": "gallinas-2022-07-09-72h-v1",
+            "label": "July 9",
+            "date": "2022-07-09",
+            "processed": true,
+            "p1_count": 288,
+            "p2_count": 284,
+            "flow_peak_cfs": 689.0
+          },
+          {
+            "id": "gallinas-2022-08-03-72h-v1",
+            "label": "August 3",
+            "date": "2022-08-03",
+            "processed": true,
+            "p1_count": 288,
+            "p2_count": 864,
+            "flow_peak_cfs": 1050.0
+          },
+          {
+            "id": "gallinas-2022-09-10-72h-v1",
+            "label": "September 10",
+            "date": "2022-09-10",
+            "processed": false,
+            "p1_count": null,
+            "p2_count": null,
+            "flow_peak_cfs": null
+          }
+        ],
+        "latest_brief": {
+          "headline": "The next event. The same unfinished work.",
+          "summary": "August's evidence joins the case without losing earlier work or responses.",
+          "changes": [
+            "New evidence linked to the existing review."
+          ]
+        },
+        "sources": [
+          {
+            "label": "Gallinas field archive \u00b7 CC BY 4.0",
+            "url": "https://doi.org/10.5281/zenodo.12762324"
+          },
+          {
+            "label": "USGS gauge 08380500",
+            "url": "https://waterdata.usgs.gov/monitoring-location/USGS-08380500/"
+          }
+        ],
+        "trace": []
+      }
+    },
+    {
+      "id": "september",
+      "title": "September \u00b7 a new gap appears",
+      "caption": "Another cloud session keeps the acknowledgment, links September's evidence and opens a separate P1 evidence-gap review.",
+      "execution_label": "Recorded Strands execution on AgentCore",
+      "snapshot": {
+        "case": {
+          "id": "GALLINAS-HPCC-2022",
+          "title": "Gallinas River",
+          "subtitle": "New Mexico \u00b7 Source-water watch",
+          "status": "OPEN",
+          "coverage": "DEGRADED",
+          "water_safety": "NOT_ASSESSED"
+        },
+        "tasks": [
+          {
+            "kind": "MONITORING_REVIEW",
+            "status": "ACKNOWLEDGED",
+            "title": "Review continuing watershed observations",
+            "reason": "New P2 observations warrant source-water review. Carry their evidence forward with the current unfinished review, or start a new review after completed work.",
+            "evidence": [
+              "gallinas-2022-07-09-72h-v1",
+              "gallinas-2022-08-03-72h-v1",
+              "gallinas-2022-09-10-72h-v1"
+            ],
+            "id": "R-01"
+          },
+          {
+            "kind": "EVIDENCE_GAP_REVIEW",
+            "status": "OPEN",
+            "title": "Review the missing station evidence",
+            "reason": "No numeric entries for P1 turbidity in the current window.",
+            "evidence": [
+              "gallinas-2022-09-10-72h-v1"
+            ],
+            "id": "R-02"
+          }
+        ],
+        "responses": [
+          {
+            "action": "acknowledge",
+            "simulated": true,
+            "task_id": "R-01"
+          }
+        ],
+        "progress": {
+          "processed": 3,
+          "total": 3,
+          "next_label": null
+        },
+        "events": [
+          {
+            "id": "gallinas-2022-07-09-72h-v1",
+            "label": "July 9",
+            "date": "2022-07-09",
+            "processed": true,
+            "p1_count": 288,
+            "p2_count": 284,
+            "flow_peak_cfs": 689.0
+          },
+          {
+            "id": "gallinas-2022-08-03-72h-v1",
+            "label": "August 3",
+            "date": "2022-08-03",
+            "processed": true,
+            "p1_count": 288,
+            "p2_count": 864,
+            "flow_peak_cfs": 1050.0
+          },
+          {
+            "id": "gallinas-2022-09-10-72h-v1",
+            "label": "September 10",
+            "date": "2022-09-10",
+            "processed": true,
+            "p1_count": 0,
+            "p2_count": 718,
+            "flow_peak_cfs": 2330.0
+          }
+        ],
+        "latest_brief": {
+          "headline": "One case. A new gap to investigate.",
+          "summary": "September adds observations while P1 evidence is absent from this archive window. Coverage gets its own review.",
+          "changes": [
+            "New evidence linked to the existing review.",
+            "Station evidence gap review opened."
+          ]
+        },
+        "sources": [
+          {
+            "label": "Gallinas field archive \u00b7 CC BY 4.0",
+            "url": "https://doi.org/10.5281/zenodo.12762324"
+          },
+          {
+            "label": "USGS gauge 08380500",
+            "url": "https://waterdata.usgs.gov/monitoring-location/USGS-08380500/"
+          }
+        ],
+        "trace": [
+          {
+            "tool": "get_case_context",
+            "input": {},
+            "output": {
+              "case": {
+                "id": "GALLINAS-HPCC-2022",
+                "title": "Gallinas River",
+                "subtitle": "New Mexico \u00b7 Source-water watch",
+                "status": "OPEN",
+                "coverage": "LIMITED",
+                "water_safety": "NOT_ASSESSED"
+              },
+              "tasks": [
+                {
+                  "kind": "MONITORING_REVIEW",
+                  "status": "ACKNOWLEDGED",
+                  "title": "Review continuing watershed observations",
+                  "reason": "New P2 observations warrant source-water review. Carry their evidence forward with the current unfinished review, or start a new review after completed work.",
+                  "evidence": [
+                    "gallinas-2022-07-09-72h-v1",
+                    "gallinas-2022-08-03-72h-v1"
+                  ],
+                  "id": "R-01"
+                }
+              ],
+              "responses": [
+                {
+                  "action": "acknowledge",
+                  "simulated": true,
+                  "task_id": "R-01"
+                }
+              ],
+              "released_event_ids": [
+                "gallinas-2022-07-09-72h-v1",
+                "gallinas-2022-08-03-72h-v1",
+                "gallinas-2022-09-10-72h-v1"
+              ],
+              "current_event_id": "gallinas-2022-09-10-72h-v1"
+            }
+          },
+          {
+            "tool": "get_observations",
+            "input": {
+              "event_id": "gallinas-2022-09-10-72h-v1"
+            },
+            "output": {
+              "event_id": "gallinas-2022-09-10-72h-v1",
+              "evidence_class": "HISTORICAL_ARCHIVE_REPLAY",
+              "available_at": "2022-09-12T06:00:00+00:00",
+              "availability_basis": "SIMULATED: window end; historical publication/telemetry latency unknown",
+              "observations_end": "2022-09-12T06:00:00+00:00",
+              "p2_turbidity_count": 718,
+              "p1_turbidity_count": 0,
+              "source_ids": [
+                "zenodo:12764157",
+                "USGS:08380500:00060",
+                "USGS:08380500:00045"
+              ],
+              "rainfall_status": "POINT_GAUGE_OBSERVATIONS_AVAILABLE",
+              "timezone_status": "ARCHIVE_INFERRED_MDT_NOT_AUTHOR_CONFIRMED",
+              "summary": {
+                "date": "2022-09-10",
+                "window_start_assumed_MDT": "2022-09-09T00:00:00-06:00",
+                "window_end_exclusive_assumed_MDT": "2022-09-12T00:00:00-06:00",
+                "window_hours": 72,
+                "stations": {
+                  "P1": {
+                    "window_turbidity": {
+                      "rows": 0,
+                      "numeric_entries": 0,
+                      "minimum": null,
+                      "maximum": null,
+                      "peak_time": null
+                    },
+                    "day_turbidity": {
+                      "rows": 0,
+                      "numeric_entries": 0,
+                      "minimum": null,
+                      "maximum": null,
+                      "peak_time": null
+                    }
+                  },
+                  "P2": {
+                    "window_turbidity": {
+                      "rows": 864,
+                      "numeric_entries": 718,
+                      "minimum": 3.18,
+                      "maximum": 3816.565,
+                      "peak_time": "2022-09-10T22:30:00-06:00"
+                    },
+                    "day_turbidity": {
+                      "rows": 288,
+                      "numeric_entries": 288,
+                      "minimum": 7.84,
+                      "maximum": 3816.565,
+                      "peak_time": "2022-09-10T22:30:00-06:00"
+                    }
+                  },
+                  "P3": {
+                    "window_turbidity": {
+                      "rows": 288,
+                      "numeric_entries": 288,
+                      "minimum": 27.58,
+                      "maximum": 769.425,
+                      "peak_time": "2022-09-11T16:15:00-06:00"
+                    },
+                    "day_turbidity": {
+                      "rows": 96,
+                      "numeric_entries": 96,
+                      "minimum": 33.405,
+                      "maximum": 82.66,
+                      "peak_time": "2022-09-10T14:00:00-06:00"
+                    }
+                  }
+                },
+                "flow_usgs_cfs": {
+                  "window": {
+                    "rows": 864,
+                    "numeric_entries": 864,
+                    "minimum": 16.2,
+                    "maximum": 2330.0,
+                    "peak_time": "2022-09-10T17:35:00-06:00"
+                  },
+                  "day": {
+                    "rows": 288,
+                    "numeric_entries": 288,
+                    "minimum": 17.1,
+                    "maximum": 2330.0,
+                    "peak_time": "2022-09-10T17:35:00-06:00"
+                  }
+                },
+                "rain_usgs_inches": {
+                  "window": {
+                    "rows": 864,
+                    "numeric_entries": 864,
+                    "minimum": 0.0,
+                    "maximum": 0.04,
+                    "peak_time": "2022-09-10T00:00:00-06:00"
+                  },
+                  "day": {
+                    "rows": 288,
+                    "numeric_entries": 288,
+                    "minimum": 0.0,
+                    "maximum": 0.04,
+                    "peak_time": "2022-09-10T00:00:00-06:00"
+                  }
+                },
+                "flow_day_peak_m3s": 65.97825255936,
+                "flow_window_peak_m3s": 65.97825255936,
+                "rainfall_status": "POINT_GAUGE_OBSERVATIONS_AVAILABLE"
+              }
+            }
+          },
+          {
+            "tool": "propose_review",
+            "input": {
+              "kind": "MONITORING_REVIEW",
+              "event_id": "gallinas-2022-09-10-72h-v1",
+              "reason": "New P2 observations warrant source-water review.",
+              "existing_task_id": "R-01"
+            },
+            "output": {
+              "status": "STAGED",
+              "operation": "LINK_EVIDENCE",
+              "committed": false,
+              "task_id": "R-01"
+            }
+          },
+          {
+            "tool": "propose_review",
+            "input": {
+              "kind": "EVIDENCE_GAP_REVIEW",
+              "event_id": "gallinas-2022-09-10-72h-v1",
+              "reason": "No numeric entries for P1 turbidity in the current window.",
+              "existing_task_id": null
+            },
+            "output": {
+              "status": "STAGED",
+              "operation": "CREATE_REVIEW",
+              "committed": false,
+              "task_id": null
+            }
+          },
+          {
+            "tool": "strands_turn",
+            "input": {
+              "instruction_version": "watershed-review-v3",
+              "model_id": "amazon.nova-pro-v1:0",
+              "sdk_version": "1.55.1",
+              "scripted_test": false
+            },
+            "output": {
+              "model_calls": 4,
+              "elapsed_seconds": 6.255,
+              "stop_reason": "end_turn",
+              "usage": {
+                "inputTokens": 9164,
+                "outputTokens": 663,
+                "totalTokens": 9827
+              },
+              "agentcore": {
+                "qualifier": "proof_v2",
+                "endpoint_version_verified_before_call": "2",
+                "stop_status": "STOP_REQUEST_ACCEPTED",
+                "runtime_session_alias": "Runtime session 2"
+              }
+            }
+          },
+          {
+            "tool": "commit_case_turn",
+            "input": {
+              "event_id": "gallinas-2022-09-10-72h-v1"
+            },
+            "output": {
+              "status": "COMMITTED",
+              "changes": [
+                "New evidence linked to the existing review.",
+                "Station evidence gap review opened."
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "publication_notes": "Observable tool receipts and saved states. Transport identifiers use stable aliases; operator note text and model message contents are excluded."
+}

@@ -97,7 +97,41 @@ import {isAmbiguousFailure, errorMessage, responseIsRecorded} from './request-st
     });
   }
   function renderSources() { const list = $('#sources'); list.replaceChildren(); (snapshot.sources || []).forEach(source => { const a = document.createElement('a'); a.textContent = safe(source.label); a.href = safe(source.url, '#'); a.target = '_blank'; a.rel = 'noreferrer'; list.appendChild(a); }); }
-  function renderTrace() { const list = $('#trace'); list.replaceChildren(); (snapshot.trace || []).forEach(entry => { const item = document.createElement('div'); item.className = 'trace-item'; const tool = document.createElement('strong'); tool.textContent = safe(entry.tool); const io = document.createElement('span'); io.textContent = `input ${JSON.stringify(entry.input || {})} · output ${JSON.stringify(entry.output || {})}`; item.append(tool, io); list.appendChild(item); }); }
+  function renderTrace() {
+    const list = $('#trace'); list.replaceChildren();
+    const trace = snapshot.trace || [];
+    const execution = trace.find(entry => entry.tool === 'strands_turn');
+    if (execution) {
+      const receipt = document.createElement('div'); receipt.className = 'execution-receipt';
+      const heading = document.createElement('strong'); heading.textContent = 'Recorded agent execution';
+      const provider = document.createElement('p');
+      provider.textContent = `${safe(execution.input?.model_id)} · Strands ${safe(execution.input?.sdk_version)}`;
+      const metrics = document.createElement('p');
+      metrics.textContent = `${safe(execution.output?.model_calls)} model calls · ${safe(execution.output?.elapsed_seconds)} s · ${safe(execution.output?.usage?.totalTokens)} tokens`;
+      receipt.append(heading, provider, metrics);
+      const cloud = execution.output?.agentcore;
+      if (cloud) {
+        const runtime = document.createElement('p');
+        runtime.textContent = `AgentCore · ${safe(cloud.qualifier)} · verified version ${safe(cloud.endpoint_version_verified_before_call)}`;
+        receipt.appendChild(runtime);
+      }
+      list.appendChild(receipt);
+    }
+    const labels = {get_case_context: 'Read the saved case', get_observations: 'Read released observations',
+      strands_turn: 'Record the model execution', commit_case_turn: 'Save validated work'};
+    trace.forEach((entry, index) => {
+      const item = document.createElement('div'); item.className = 'trace-item';
+      const tool = document.createElement('strong');
+      const action = entry.tool === 'propose_review' ? (entry.output?.operation === 'LINK_EVIDENCE'
+        ? 'Propose linking evidence to the existing review' : 'Propose a new review') : labels[entry.tool];
+      tool.textContent = `${index + 1}. ${safe(action, entry.tool)}`;
+      const detail = document.createElement('details'); detail.className = 'trace-detail';
+      const summary = document.createElement('summary'); summary.textContent = `${safe(entry.tool)} · inputs & results`;
+      const io = document.createElement('pre');
+      io.textContent = JSON.stringify({input: entry.input || {}, output: entry.output || {}}, null, 2);
+      detail.append(summary, io); item.append(tool, detail); list.appendChild(item);
+    });
+  }
   function showEmpty(message) { els.welcome.classList.add('hidden'); els.workspace.classList.add('hidden'); els.empty.classList.remove('hidden'); $('#empty-text').textContent = message; els.app.setAttribute('aria-busy', 'false'); }
   function freezePendingForm(taskId, form) { form.classList.add('visible'); $('textarea', form).disabled = true; form.closest('.task').querySelectorAll('button[data-action]').forEach(button => { button.disabled = true; }); $('.note-heading', form).textContent = 'Pending response · reconcile before editing'; const save = $('[data-save]', form); save.textContent = 'Retry / reconcile response'; save.dataset.retry = taskId; }
   function clearPending(taskId) {
