@@ -29,7 +29,7 @@ The location registry gives field plans an exact place and revision to reference
 
 The registry's authorization check requires the latest site revision. A withdrawn or replaced approval cannot authorize new work through an older record. Demonstration sites stay attached to demonstration cases, and station metadata provides a reference location without granting field access or permission to sample.
 
-The registry and [structured field-work ledger](FIELD_WORK.md) are implemented and tested. Plans now carry approval, reported outcomes, evidence references and human verification. Their browser controls and field-aware agent decisions are the next integration steps.
+The registry and [structured field-work ledger](FIELD_WORK.md) are implemented and tested. Plans now carry approval, reported outcomes, evidence references and human verification. [Field decision tools](FIELD_CONTEXT.md) can stage a recommendation against those exact results. Their browser controls and connection to Strands execution and persistent agent proposals are the next integration steps.
 
 - [Location registry and approval checks](../watershed_memory/current/locations.py)
 - [Bundled station reference](../watershed_memory/data/gallinas_location.json)

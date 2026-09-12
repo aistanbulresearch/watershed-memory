@@ -17,7 +17,7 @@ SELECTIONS = (
 _JOIN = " FROM field_plans p JOIN current_reviews r ON r.case_id=p.case_id AND r.task_id=p.task_id "
 _ACTIVE = "p.status IN ('PROPOSED','APPROVED','DEFERRED')"
 _PARENT_ACTIVE = "r.status IN ('PROPOSED','APPROVED','DEFERRED')"
-_KINDS = "('OBSERVATION_REVIEW','COVERAGE_REVIEW')"
+_KINDS = ("OBSERVATION_REVIEW", "COVERAGE_REVIEW")
 
 
 def field_hash(value):
@@ -28,46 +28,33 @@ def _load_field_context(db, case, locations, *, evaluated_at):
     if not db.in_transaction or type(locations) is not LocationRegistry:
         raise ValueError("field context requires a transaction and trusted locations")
     case_id = case["case_id"]
-    invalid = db.execute(
-        "SELECT 1"
-        + _JOIN
-        + "WHERE p.case_id=? AND "
-        + _ACTIVE
-        + " AND "
-        + _PARENT_ACTIVE
-        + " AND r.revision=p.review_revision AND r.kind NOT IN "
-        + _KINDS
-        + " LIMIT 1",
+    active = db.execute(
+        "SELECT p.plan_id,p.task_id,p.review_revision,p.last_activity_revision,r.revision,r.kind "
+        "FROM current_reviews r INDEXED BY current_active_kind "
+        "CROSS JOIN field_plans p INDEXED BY field_active_review "
+        "ON p.case_id=r.case_id AND p.task_id=r.task_id "
+        "WHERE r.case_id=? AND " + _PARENT_ACTIVE + " AND " + _ACTIVE + " LIMIT 3",
         (case_id,),
-    ).fetchone()
-    if invalid is not None:
+    ).fetchall()
+    if any(row[5] not in _KINDS for row in active):
         raise ValueError("active field plan has an unsupported parent kind")
-    current = db.execute(
-        "SELECT p.plan_id"
-        + _JOIN
-        + "WHERE p.case_id=? AND "
-        + _ACTIVE
-        + " AND "
-        + _PARENT_ACTIVE
-        + " AND r.revision=p.review_revision AND r.kind IN "
-        + _KINDS
-        + " ORDER BY p.task_id,p.plan_id LIMIT 3",
-        (case_id,),
-    ).fetchall()
-    if len(current) > 2:
+    if len(active) > 2:
         raise ValueError("too many actionable field plans")
-    stranded = db.execute(
+    current = sorted((row for row in active if row[2] == row[4]), key=lambda row: row[1])
+    blockers = sorted((row for row in active if row[2] != row[4]), key=lambda row: -row[3])
+    terminal = db.execute(
         "SELECT p.plan_id"
         + _JOIN
         + "WHERE p.case_id=? AND "
         + _ACTIVE
-        + " AND (r.revision<>p.review_revision OR r.status IN ('CANCELLED','DISMISSED'))"
-        + " ORDER BY p.last_activity_revision DESC,p.plan_id LIMIT 4",
-        (case_id,),
+        + " AND r.status IN ('CANCELLED','DISMISSED')"
+        + " ORDER BY p.last_activity_revision DESC LIMIT ?",
+        (case_id, 4 - len(blockers)),
     ).fetchall()
+    stranded = [*blockers, *terminal]
     reported = db.execute(
         "SELECT plan_id FROM field_plans WHERE case_id=? AND status='REPORTED' "
-        "ORDER BY last_activity_revision DESC,plan_id LIMIT 4",
+        "ORDER BY last_activity_revision DESC LIMIT 4",
         (case_id,),
     ).fetchall()
     approved = {}
