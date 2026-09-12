@@ -1,0 +1,25 @@
+__pycache__/
+*.pyc
+.venv/
+temp/
+feasibility/data/raw/*.zip
+feasibility/data/raw/*.partial
+
+# Private director records: local only, including after Git initialization.
+/.local/
+/AGENTS.md
+/PROJECT_STATE.md
+/Daily/
+
+# Local source material, audit notes and regenerated evidence.
+/Watershed Memory Brainstorming.docx
+/overview.txt
+/Project Requirements.txt
+/Judges & Criteria.txt
+/plan/
+/feasibility/FEASIBILITY_REPORT.md
+/feasibility/data/
+/feasibility/runs/
+.env
+.env.*
+!.env.example

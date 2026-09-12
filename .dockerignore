@@ -1,0 +1,22 @@
+# Private director records must never enter an image or hosting build context.
+.local
+AGENTS.md
+PROJECT_STATE.md
+Daily
+.git
+.venv
+**/__pycache__
+**/*.pyc
+temp
+feasibility/data/raw/*.zip
+feasibility/data/raw/*.partial
+Watershed Memory Brainstorming.docx
+overview.txt
+Project Requirements.txt
+Judges & Criteria.txt
+plan
+feasibility/FEASIBILITY_REPORT.md
+feasibility/data
+feasibility/runs
+.env
+.env.*
