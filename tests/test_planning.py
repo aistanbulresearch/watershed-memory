@@ -7,6 +7,22 @@ from watershed_memory.planning import GAP, MONITORING, EvidenceTools, Plan, Repl
 from watershed_memory.service import Service
 
 
+def test_operator_notes_and_transport_identity_stay_outside_agent_context(tmp_path):
+    service = Service(tmp_path / "private-note.sqlite")
+    session = service.create_session()["session_id"]
+    state = service.advance(session, "july")
+    state = service.respond(session, "operator", state["tasks"][0]["id"],
+                            "acknowledge", "Private operator text must stay local.")
+    context = EvidenceTools(state, PACKETS[:2]).get_case_context()
+    assert context["responses"][0]["action"] == "acknowledge"
+    assert "note" not in context["responses"][0]
+    assert "actor" not in context["responses"][0]
+    assert "session_id" not in context
+    context["tasks"][0]["status"] = "COMPLETED"
+    assert service.snapshot(session)["tasks"][0]["status"] == "ACKNOWLEDGED"
+    assert service.snapshot(session)["responses"][0]["note"].startswith("Private operator")
+
+
 def test_tools_require_read_context_and_released_evidence(tmp_path):
     state = Service(tmp_path / "case.sqlite").create_session()
     tools = EvidenceTools(state, PACKETS[:1])

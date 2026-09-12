@@ -16,4 +16,6 @@ Official observations from [USGS Water Services](https://waterservices.usgs.gov/
 
 ## Software
 
-The original data and persistence proof uses the Python standard library. The application installs its dependencies separately through `uv.lock`, including Strands Agents and the Bedrock AgentCore SDK (Apache-2.0); their licenses remain with their distributions. Source analysis programs from the downloaded archive are not executed or bundled.
+The original data and persistence proof uses the Python standard library. The application installs its dependencies through `uv.lock`, including Strands Agents and the Bedrock AgentCore SDK (Apache-2.0). The optional AgentCore CodeZip bundles the locked runtime dependencies and retains their distributed license, notice and metadata files. Source analysis programs from the downloaded data archive are not executed or bundled.
+
+AWS OpenTelemetry Distro 0.19.0 is Apache-2.0, authored by Amazon Web Services. Its wheel omits standalone license and notice files, so the Runtime artifact additionally includes [LICENSE](third_party/aws-otel-python-instrumentation/LICENSE), [NOTICE](third_party/aws-otel-python-instrumentation/NOTICE) and [third-party attribution](third_party/aws-otel-python-instrumentation/THIRD-PARTY-LICENSES) retrieved from the [upstream project](https://github.com/aws-observability/aws-otel-python-instrumentation) on September 12, 2026. The library is used unchanged.

@@ -29,6 +29,17 @@ class Planner(Protocol):
     def plan(self, state: dict, released: list[dict]) -> Plan: ...
 
 
+def project_case(state: dict) -> dict:
+    """Expose review state while keeping free-text operator notes in the case ledger."""
+    response_fields = ("task_id", "action", "recorded_at", "simulated")
+    return {
+        "case": deepcopy(state["case"]),
+        "tasks": deepcopy(state["tasks"]),
+        "responses": [{key: deepcopy(response[key]) for key in response_fields}
+                      for response in state["responses"]],
+    }
+
+
 class EvidenceTools:
     """A per-turn capability: no arbitrary paths, URLs, SQL or operator actions."""
 
@@ -49,9 +60,7 @@ class EvidenceTools:
         """Read saved reviews, their evidence links and demonstration operator responses."""
         self._context_read = True
         return self._record("get_case_context", {}, {
-            "case": deepcopy(self._state["case"]),
-            "tasks": deepcopy(self._state["tasks"]),
-            "responses": deepcopy(self._state["responses"]),
+            **project_case(self._state),
             "released_event_ids": list(self._released),
             "current_event_id": self._current["event_id"],
         })

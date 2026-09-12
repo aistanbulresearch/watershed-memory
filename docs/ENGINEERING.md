@@ -31,12 +31,14 @@ Each run writes a new directory with an input/version manifest, before/after sna
 
 The agent chooses `get_case_context`, `get_observations` and `propose_review`. Proposals include the current event, a short reason and an exact existing task ID when appropriate. Final prose is not a database command. Tool results, SDK/model identity, call count and aggregate usage are retained; hidden reasoning is not collected.
 
+The operator workspace can use the same live planner, or a pinned AgentCore Runtime endpoint, with an explicit shared turn allowance. [Run the live workspace and inspect its cloud boundary](AGENTCORE.md).
+
 ## Meaningful local checks
 
 ```bash
 uv run pytest -q
 node --test tests/request-state.test.mjs
-uv run ruff check watershed_memory tests feasibility/run_strands.py
+uv run ruff check watershed_memory tests runtime deployment feasibility/run_strands.py
 ```
 
 Tests exercise FastAPI, separate sessions, responses, duplicates and concurrent claims. Adversarial planners try direct safety-state mutation, invented coverage gaps and forged tool results; the service rejects them. SDK tests use a labelled scripted provider to exercise the installed Strands protocol: read a task ID from tool output, select it on a later event, handle completed work and enforce a call cap. These validate integration mechanics; the live command supplies model evidence.

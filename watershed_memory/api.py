@@ -8,8 +8,10 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from . import __version__
+from .budget import DemoBudgetExhausted
 from .service import Conflict, InProgress, Service, SessionNotFound
 
 
@@ -30,6 +32,8 @@ class ResponseBody(AdvanceBody):
 def create_app(service: Service | None = None) -> FastAPI:
     ledger = service or Service(Path(".local/runtime/cases.sqlite"))
     app = FastAPI(title="Watershed Memory", version=__version__, docs_url=None, redoc_url=None)
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost"],
+                       www_redirect=False)
     public = Path(__file__).parent / "static"
 
     @app.middleware("http")
@@ -66,6 +70,10 @@ def create_app(service: Service | None = None) -> FastAPI:
     @app.exception_handler(InProgress)
     async def pending(_request: Request, error: InProgress):
         return JSONResponse({"detail": str(error)}, status_code=503, headers={"Retry-After": "2"})
+
+    @app.exception_handler(DemoBudgetExhausted)
+    async def exhausted(_request: Request, error: DemoBudgetExhausted):
+        return JSONResponse({"detail": str(error)}, status_code=429)
 
     @app.get("/api/health")
     def health():

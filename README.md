@@ -4,7 +4,9 @@
 
 **A wildfire changes more than the landscape. It changes the work of protecting a drinking-water source.**
 
-Every new observation arrives alongside earlier measurements, unfinished reviews and changing evidence coverage. For a source-water team, the job is to connect what changed with what still needs attention.
+In July 2022, Las Vegas, New Mexico declared a disaster after flooding, ash and fire debris damaged infrastructure and threatened its water supply. Its water team had to keep monitoring an evolving watershed. [New Mexico Environment Department](https://www.env.nm.gov/wp-content/uploads/2022/08/2022-08-03-COMMS-City-of-Las-Vegas-drinking-water-remains-safe-to-drink-Final.pdf).
+
+Every new observation arrives alongside earlier measurements, unfinished reviews and changing evidence coverage. The work has to stay connected from one storm to the next.
 
 **Watershed Memory keeps that work connected.** One watershed case carries observations and operator responses forward. A later event strengthens an existing review; missing station evidence gets its own review. The next storm arrives. The work stays connected.
 
@@ -37,7 +39,7 @@ The Strands integration exposes three bounded tools: read saved case context, re
 
 The installed SDK is tested through its actual model/tool protocol, including context-dependent task selection and failure handling. A separate command runs the three-case gate against real Bedrock credentials and saves call, usage, tool and persistence evidence. [Run the Strands gate](docs/ENGINEERING.md#real-strands-gate).
 
-**AgentCore Runtime and Observability are the cloud deployment target.** The current release provides the local workspace and Strands integration; cloud deployment is a separate acceptance checkpoint.
+**A fresh AgentCore session can receive the same enduring case.** The Runtime adapter, strict proposal contract and instrumented deployment package are implemented with local protocol tests. Cloud execution is a separate acceptance checkpoint. [Explore the Runtime boundary](docs/AGENTCORE.md).
 
 ### Engineering worth opening
 
@@ -55,7 +57,7 @@ The installed SDK is tested through its actual model/tool protocol, including co
 ```bash
 uv run pytest -q
 node --test tests/request-state.test.mjs
-uv run ruff check watershed_memory tests feasibility/run_strands.py
+uv run ruff check watershed_memory tests runtime deployment feasibility/run_strands.py
 python -m unittest discover -s feasibility -p "test_*.py"
 ```
 

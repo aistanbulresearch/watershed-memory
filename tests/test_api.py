@@ -9,7 +9,7 @@ from watershed_memory.service import Service
 
 @pytest.fixture
 def client(tmp_path):
-    with TestClient(create_app(Service(tmp_path / "http.sqlite"))) as instance:
+    with TestClient(create_app(Service(tmp_path / "http.sqlite")), base_url="http://127.0.0.1") as instance:
         yield instance
 
 
