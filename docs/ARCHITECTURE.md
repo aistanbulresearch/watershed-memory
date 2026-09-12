@@ -1,42 +1,56 @@
-# How Watershed Memory keeps the case connected
+# One case, successive observations
 
-The case is the durable center of the system. Observations become linked evidence; reviews and operator responses stay attached as later events arrive.
+The source-water case survives individual model calls, browser tabs and server restarts. An agent turn reads that case, selects evidence and proposes permitted work. The service checks the whole turn before saving it.
 
 ```mermaid
 flowchart LR
-    A[USGS observations] --> C[Reconcile station, units and time]
-    B[Public water-quality archive] --> C
-    C --> D[Historical event packets]
-    D --> E[Validated task operations]
-    E <--> F[(Persistent watershed case)]
-    G[Demonstration operator response] --> E
-    F --> H[Review history and execution record]
-    I[Next: Strands agent] -. retrieve evidence .-> D
-    I -. retrieve case history .-> F
-    I -. choose permitted action .-> E
-    J[Next: operator web experience] -. review and respond .-> E
+    O[Source-water operator] --> UI[Operator workspace]
+    UI --> API[Case API]
+    API --> Claim[Claim request identity]
+    Claim --> Planner{Selected planner}
+    Planner --> Rules[Historical rules replay]
+    Planner --> Strands[Strands agent / Bedrock]
+    Rules --> Tools[Context, observations, review proposals]
+    Strands --> Tools
+    Archive[Attributed historical packets] --> Tools
+    DB[(Durable case and request ledger)] --> Tools
+    Tools --> Validate[Validate proposals and recorded evidence]
+    Validate --> Commit[Atomic update and request receipt]
+    Commit --> DB
+    DB --> UI
+    UI --> Response[Explicit operator response]
+    Response --> DB
 ```
 
-Solid paths are implemented in the current replay. Dashed paths identify the next product integrations.
+The default browser experience uses historical rules replay. The Strands adapter runs through the same guarded tools; the explicit live-gate command invokes Bedrock. AgentCore Runtime plus Observability is the deployment target, with case storage external to runtime sessions.
 
-## One case, successive events
+## Decision boundaries
 
-The database stores the case, event packets, review tasks, links between tasks and evidence, and operator responses. Each incoming packet is validated before it can change state. Task updates and evidence links share a transaction.
-
-The replay uses a separate process for each step. Persistence therefore comes from the case store and its records, rather than an open chat or a process that happens to remain alive.
-
-## Tools do the bookkeeping; the agent will choose the work
-
-The planned Strands loop will retrieve the relevant case history, inspect available observations, choose a permitted review action and produce a grounded explanation. The task layer enforces references, timing, allowed transitions and duplicate protection. Operator responses are explicit actions with their own record.
-
-This gives the operator a clear path: **what changed, what remains open, and what to review next**.
-
-## Where to look
-
-| Component | Implementation |
+| Boundary | Responsibility |
 |---|---|
-| Source acquisition and checksums | [fetch_data.py](../feasibility/fetch_data.py) |
-| Time, units and observation packets | [reconcile.py](../feasibility/reconcile.py) |
-| Case state and task transactions | [workflow.py](../feasibility/workflow.py) |
-| Process-separated replay | [run_proof.py](../feasibility/run_proof.py) |
-| Failure and data checks | [test_workflow.py](../feasibility/test_workflow.py), [test_reconcile.py](../feasibility/test_reconcile.py) |
+| Catalog | Pinned source windows, units and provenance; measurements released sequentially |
+| Planner | Retrieve context/evidence and explicitly select a task or propose new work |
+| Evidence tools | Check references, review kinds, expected coverage and existing targets |
+| Case service | Independently revalidate proposals and recorded tool results |
+| Request ledger | Claim work before inference; commit state and response receipt atomically |
+| Operator | Acknowledge/complete a review with a note, separately from agent work |
+
+## Retry and restart
+
+SQLite stores independent session snapshots, immutable request receipts and a durable per-session execution claim. The claim is acquired before planning, so a repeated concurrent request does not start another model turn. An active claim returns a retryable response; the client keeps the request identity. A commit requires the expected case revision and current claim owner.
+
+A crashed process leaves a claim for up to five minutes. An expired claim can be replaced; the previous owner cannot later commit. Each turn is capped at eight model calls and 120 seconds, with provider timeouts. A committed request receipt prevents repeating the saved action.
+
+The planner receives copies of case state and released packets. Tools stage proposals. The service builds the saved state itself: direct planner mutation, forged targets, missing actions and inconsistent tool results are rejected. Model/tool failure leaves the saved case unchanged.
+
+## Implementation map
+
+| Component | Source |
+|---|---|
+| Evidence and release boundaries | [catalog.py](../watershed_memory/catalog.py) |
+| Tools and review policy | [planning.py](../watershed_memory/planning.py) |
+| Strands and inference guards | [strands_agent.py](../watershed_memory/strands_agent.py) |
+| Sessions, claims and receipts | [service.py](../watershed_memory/service.py) |
+| HTTP and static serving | [api.py](../watershed_memory/api.py) |
+| Operator experience | [static](../watershed_memory/static/) |
+| Original reconciliation | [reconcile.py](../feasibility/reconcile.py) |

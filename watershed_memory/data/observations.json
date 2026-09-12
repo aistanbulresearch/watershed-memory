@@ -1,0 +1,322 @@
+[
+  {
+    "event_id": "gallinas-2022-07-09-72h-v1",
+    "evidence_class": "HISTORICAL_ARCHIVE_REPLAY",
+    "available_at": "2022-07-11T06:00:00+00:00",
+    "availability_basis": "SIMULATED: window end; historical publication/telemetry latency unknown",
+    "observations_end": "2022-07-11T06:00:00+00:00",
+    "p2_turbidity_count": 284,
+    "p1_turbidity_count": 288,
+    "source_ids": [
+      "zenodo:12764157",
+      "USGS:08380500:00060"
+    ],
+    "rainfall_status": "NO_RETRIEVED_OBSERVATIONS",
+    "timezone_status": "ARCHIVE_INFERRED_MDT_NOT_AUTHOR_CONFIRMED",
+    "summary": {
+      "date": "2022-07-09",
+      "window_start_assumed_MDT": "2022-07-08T00:00:00-06:00",
+      "window_end_exclusive_assumed_MDT": "2022-07-11T00:00:00-06:00",
+      "window_hours": 72,
+      "stations": {
+        "P1": {
+          "window_turbidity": {
+            "rows": 288,
+            "numeric_entries": 288,
+            "minimum": 45.45013089,
+            "maximum": 1178.524974,
+            "peak_time": "2022-07-10T00:00:00-06:00"
+          },
+          "day_turbidity": {
+            "rows": 96,
+            "numeric_entries": 96,
+            "minimum": 46.7158377,
+            "maximum": 996.303089,
+            "peak_time": "2022-07-09T23:00:00-06:00"
+          }
+        },
+        "P2": {
+          "window_turbidity": {
+            "rows": 288,
+            "numeric_entries": 284,
+            "minimum": 3.955952381,
+            "maximum": 1309.662857,
+            "peak_time": "2022-07-10T15:30:00-06:00"
+          },
+          "day_turbidity": {
+            "rows": 96,
+            "numeric_entries": 96,
+            "minimum": 3.955952381,
+            "maximum": 856.902619,
+            "peak_time": "2022-07-09T19:45:00-06:00"
+          }
+        },
+        "P3": {
+          "window_turbidity": {
+            "rows": 288,
+            "numeric_entries": 0,
+            "minimum": null,
+            "maximum": null,
+            "peak_time": null
+          },
+          "day_turbidity": {
+            "rows": 96,
+            "numeric_entries": 0,
+            "minimum": null,
+            "maximum": null,
+            "peak_time": null
+          }
+        }
+      },
+      "flow_usgs_cfs": {
+        "window": {
+          "rows": 288,
+          "numeric_entries": 288,
+          "minimum": 28.7,
+          "maximum": 689.0,
+          "peak_time": "2022-07-09T21:30:00-06:00"
+        },
+        "day": {
+          "rows": 96,
+          "numeric_entries": 96,
+          "minimum": 28.7,
+          "maximum": 689.0,
+          "peak_time": "2022-07-09T21:30:00-06:00"
+        }
+      },
+      "rain_usgs_inches": {
+        "window": {
+          "rows": 0,
+          "numeric_entries": 0,
+          "minimum": null,
+          "maximum": null,
+          "peak_time": null
+        },
+        "day": {
+          "rows": 0,
+          "numeric_entries": 0,
+          "minimum": null,
+          "maximum": null,
+          "peak_time": null
+        }
+      },
+      "flow_day_peak_m3s": 19.510307301888,
+      "flow_window_peak_m3s": 19.510307301888,
+      "rainfall_status": "NO_RETRIEVED_OBSERVATIONS"
+    }
+  },
+  {
+    "event_id": "gallinas-2022-08-03-72h-v1",
+    "evidence_class": "HISTORICAL_ARCHIVE_REPLAY",
+    "available_at": "2022-08-05T06:00:00+00:00",
+    "availability_basis": "SIMULATED: window end; historical publication/telemetry latency unknown",
+    "observations_end": "2022-08-05T06:00:00+00:00",
+    "p2_turbidity_count": 864,
+    "p1_turbidity_count": 288,
+    "source_ids": [
+      "zenodo:12764157",
+      "USGS:08380500:00060",
+      "USGS:08380500:00045"
+    ],
+    "rainfall_status": "POINT_GAUGE_OBSERVATIONS_AVAILABLE",
+    "timezone_status": "ARCHIVE_INFERRED_MDT_NOT_AUTHOR_CONFIRMED",
+    "summary": {
+      "date": "2022-08-03",
+      "window_start_assumed_MDT": "2022-08-02T00:00:00-06:00",
+      "window_end_exclusive_assumed_MDT": "2022-08-05T00:00:00-06:00",
+      "window_hours": 72,
+      "stations": {
+        "P1": {
+          "window_turbidity": {
+            "rows": 288,
+            "numeric_entries": 288,
+            "minimum": 37.69404922,
+            "maximum": 1044.615839,
+            "peak_time": "2022-08-04T21:15:00-06:00"
+          },
+          "day_turbidity": {
+            "rows": 96,
+            "numeric_entries": 96,
+            "minimum": 37.69404922,
+            "maximum": 903.2267785,
+            "peak_time": "2022-08-03T19:45:00-06:00"
+          }
+        },
+        "P2": {
+          "window_turbidity": {
+            "rows": 864,
+            "numeric_entries": 864,
+            "minimum": 63.99,
+            "maximum": 1561.41,
+            "peak_time": "2022-08-02T00:00:00-06:00"
+          },
+          "day_turbidity": {
+            "rows": 288,
+            "numeric_entries": 288,
+            "minimum": 63.99,
+            "maximum": 687.46,
+            "peak_time": "2022-08-03T22:15:00-06:00"
+          }
+        },
+        "P3": {
+          "window_turbidity": {
+            "rows": 288,
+            "numeric_entries": 288,
+            "minimum": 158.285,
+            "maximum": 1649.065,
+            "peak_time": "2022-08-02T13:15:00-06:00"
+          },
+          "day_turbidity": {
+            "rows": 96,
+            "numeric_entries": 96,
+            "minimum": 167.23,
+            "maximum": 302.71,
+            "peak_time": "2022-08-03T00:00:00-06:00"
+          }
+        }
+      },
+      "flow_usgs_cfs": {
+        "window": {
+          "rows": 864,
+          "numeric_entries": 864,
+          "minimum": 61.3,
+          "maximum": 1050.0,
+          "peak_time": "2022-08-03T17:20:00-06:00"
+        },
+        "day": {
+          "rows": 288,
+          "numeric_entries": 288,
+          "minimum": 61.3,
+          "maximum": 1050.0,
+          "peak_time": "2022-08-03T17:20:00-06:00"
+        }
+      },
+      "rain_usgs_inches": {
+        "window": {
+          "rows": 864,
+          "numeric_entries": 864,
+          "minimum": 0.0,
+          "maximum": 0.01,
+          "peak_time": "2022-08-02T19:20:00-06:00"
+        },
+        "day": {
+          "rows": 288,
+          "numeric_entries": 288,
+          "minimum": 0.0,
+          "maximum": 0.01,
+          "peak_time": "2022-08-03T09:30:00-06:00"
+        }
+      },
+      "flow_day_peak_m3s": 29.7326889216,
+      "flow_window_peak_m3s": 29.7326889216,
+      "rainfall_status": "POINT_GAUGE_OBSERVATIONS_AVAILABLE"
+    }
+  },
+  {
+    "event_id": "gallinas-2022-09-10-72h-v1",
+    "evidence_class": "HISTORICAL_ARCHIVE_REPLAY",
+    "available_at": "2022-09-12T06:00:00+00:00",
+    "availability_basis": "SIMULATED: window end; historical publication/telemetry latency unknown",
+    "observations_end": "2022-09-12T06:00:00+00:00",
+    "p2_turbidity_count": 718,
+    "p1_turbidity_count": 0,
+    "source_ids": [
+      "zenodo:12764157",
+      "USGS:08380500:00060",
+      "USGS:08380500:00045"
+    ],
+    "rainfall_status": "POINT_GAUGE_OBSERVATIONS_AVAILABLE",
+    "timezone_status": "ARCHIVE_INFERRED_MDT_NOT_AUTHOR_CONFIRMED",
+    "summary": {
+      "date": "2022-09-10",
+      "window_start_assumed_MDT": "2022-09-09T00:00:00-06:00",
+      "window_end_exclusive_assumed_MDT": "2022-09-12T00:00:00-06:00",
+      "window_hours": 72,
+      "stations": {
+        "P1": {
+          "window_turbidity": {
+            "rows": 0,
+            "numeric_entries": 0,
+            "minimum": null,
+            "maximum": null,
+            "peak_time": null
+          },
+          "day_turbidity": {
+            "rows": 0,
+            "numeric_entries": 0,
+            "minimum": null,
+            "maximum": null,
+            "peak_time": null
+          }
+        },
+        "P2": {
+          "window_turbidity": {
+            "rows": 864,
+            "numeric_entries": 718,
+            "minimum": 3.18,
+            "maximum": 3816.565,
+            "peak_time": "2022-09-10T22:30:00-06:00"
+          },
+          "day_turbidity": {
+            "rows": 288,
+            "numeric_entries": 288,
+            "minimum": 7.84,
+            "maximum": 3816.565,
+            "peak_time": "2022-09-10T22:30:00-06:00"
+          }
+        },
+        "P3": {
+          "window_turbidity": {
+            "rows": 288,
+            "numeric_entries": 288,
+            "minimum": 27.58,
+            "maximum": 769.425,
+            "peak_time": "2022-09-11T16:15:00-06:00"
+          },
+          "day_turbidity": {
+            "rows": 96,
+            "numeric_entries": 96,
+            "minimum": 33.405,
+            "maximum": 82.66,
+            "peak_time": "2022-09-10T14:00:00-06:00"
+          }
+        }
+      },
+      "flow_usgs_cfs": {
+        "window": {
+          "rows": 864,
+          "numeric_entries": 864,
+          "minimum": 16.2,
+          "maximum": 2330.0,
+          "peak_time": "2022-09-10T17:35:00-06:00"
+        },
+        "day": {
+          "rows": 288,
+          "numeric_entries": 288,
+          "minimum": 17.1,
+          "maximum": 2330.0,
+          "peak_time": "2022-09-10T17:35:00-06:00"
+        }
+      },
+      "rain_usgs_inches": {
+        "window": {
+          "rows": 864,
+          "numeric_entries": 864,
+          "minimum": 0.0,
+          "maximum": 0.04,
+          "peak_time": "2022-09-10T00:00:00-06:00"
+        },
+        "day": {
+          "rows": 288,
+          "numeric_entries": 288,
+          "minimum": 0.0,
+          "maximum": 0.04,
+          "peak_time": "2022-09-10T00:00:00-06:00"
+        }
+      },
+      "flow_day_peak_m3s": 65.97825255936,
+      "flow_window_peak_m3s": 65.97825255936,
+      "rainfall_status": "POINT_GAUGE_OBSERVATIONS_AVAILABLE"
+    }
+  }
+]
