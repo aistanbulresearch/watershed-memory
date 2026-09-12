@@ -29,6 +29,7 @@ Human notes stay in private receipts. The case projection exposes the structured
 - [Command records](../watershed_memory/current/case_types.py) and [relational schema](../watershed_memory/current/case_schema.py)
 - [Workflow, concurrency, rollback and isolation tests](../tests/test_current_case_store.py)
 - [Current source collection and evidence facts](CONTINUOUS_WATCH.md)
+- [Current Strands tools: relevant evidence and the team's saved plan](CURRENT_AGENT.md)
 
 ```sh
 uv run --locked pytest tests/test_current_case_types.py tests/test_current_case_store.py -q
