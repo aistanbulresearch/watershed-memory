@@ -105,6 +105,25 @@ class FieldStore:
         plan, result, evidence, verification = handler(
             db, case, command, principal, now, self.locations
         )
+        return self._save_mutation(
+            db,
+            operation,
+            case,
+            encoded,
+            plan,
+            result,
+            evidence,
+            verification,
+            request_id=request_id,
+            now=now,
+        )
+
+    def _save_mutation(
+        self, db, operation, case, encoded, plan, result, evidence, verification, *, request_id, now
+    ):
+        if not db.in_transaction:
+            raise ValueError("field receipt requires an explicit transaction")
+        case_id = case["case_id"]
         receipt = FieldMutationReceipt(
             request_id,
             operation,
@@ -143,6 +162,32 @@ class FieldStore:
         )
         save_membership(db, receipt)
         return receipt
+
+    def _stage_agent_plan(
+        self,
+        db,
+        case_id,
+        command,
+        *,
+        attempt_id,
+        request_id,
+        expected_case_revision,
+        reserved_context_digest,
+        now,
+    ):
+        from .field_agent import stage_agent_plan
+
+        return stage_agent_plan(
+            self,
+            db,
+            case_id,
+            command,
+            attempt_id=attempt_id,
+            request_id=request_id,
+            expected_case_revision=expected_case_revision,
+            reserved_context_digest=reserved_context_digest,
+            now=now,
+        )
 
     def propose_plan(self, case_id, command, *, principal, request_id, expected_case_revision, now):
         return self._write(
