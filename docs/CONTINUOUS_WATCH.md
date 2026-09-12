@@ -52,6 +52,8 @@ Comparisons retain the exact measured values and signed change, with a clearly d
 
 The current facts layer runs locally without model calls. Its integration tests exercise the complete adapter → SQLite → reopened evidence → facts path.
 
+The [current work ledger](CURRENT_WORK.md) carries those evidence references into operator-owned plans, preserves changes and deferrals, and records each human action against the exact review revision.
+
 - [Source adapter](../watershed_memory/watch/usgs.py) and [immutable records](../watershed_memory/watch/observations.py)
 - [Transactional store](../watershed_memory/watch/store.py), [relational schema](../watershed_memory/watch/store_schema.py) and [revision ingestion](../watershed_memory/watch/store_ingest.py)
 - [Bounded event construction](../watershed_memory/watch/store_events.py) and [batch validation](../watershed_memory/watch/store_validation.py)
