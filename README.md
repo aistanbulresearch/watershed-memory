@@ -14,6 +14,8 @@ Built by **AIstanbul Research Group** for the **Agents for Humans Hackathon**, P
 
 **[Watch the verified cloud run](https://aistanbulresearch.github.io/watershed-memory/)** — four recorded moments, one enduring case, with the actual Strands tool receipts available to inspect.
 
+[![The recorded September cloud run keeps review R-01 acknowledged with three evidence links and opens a separate R-02 evidence-gap review.](docs/assets/recorded-case.png)](https://aistanbulresearch.github.io/watershed-memory/#journey)
+
 ### Try the operator workspace
 
 With [uv](https://docs.astral.sh/uv/) and Python 3.12:
