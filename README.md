@@ -55,7 +55,7 @@ The Strands integration exposes three bounded tools: read saved case context, re
 - **Evidence checks:** unreleased observations are unavailable to tools; recorded results are checked against case and source packets.
 - **An operator experience:** accessible actions, saved responses, contextual next steps, and evidence/trace panels on demand.
 
-[Architecture](docs/ARCHITECTURE.md) · [Implementation and checks](docs/ENGINEERING.md) · [Source attribution](THIRD_PARTY_NOTICES.md)
+[Architecture](docs/ARCHITECTURE.md) · [Implementation and checks](docs/ENGINEERING.md) · [Interactive hosting](docs/HOSTING.md) · [Source attribution](THIRD_PARTY_NOTICES.md)
 
 ### Check it
 
@@ -66,7 +66,7 @@ uv run ruff check watershed_memory tests runtime deployment feasibility/run_stra
 python -m unittest discover -s feasibility -p "test_*.py"
 ```
 
-**130 Python tests** cover the HTTP journey, isolation, failure atomicity, adversarial planner output, request claims, Strands/AgentCore protocols, public evidence export and durable invocation limits through concurrency and process death. JavaScript request-state checks cover recovery after a lost response. The original proof remains reproducible, with **21 tests and 11 checks across eight fresh processes**. [Original replay guide](feasibility/README.md).
+**209 Python tests** cover the HTTP journey, isolation, failure atomicity, adversarial planner output, request claims, Strands/AgentCore protocols, public evidence export, invocation limits through concurrency and process death, and explicit web exposure with private-metadata filtering. JavaScript request-state checks cover recovery after a lost response. The original proof remains reproducible, with **21 tests and 11 checks across eight fresh processes**. [Original replay guide](feasibility/README.md).
 
 ### License
 

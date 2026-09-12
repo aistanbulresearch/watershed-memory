@@ -9,12 +9,18 @@ import uvicorn
 from .api import create_app
 from .persistent_budget import PersistentBudgetPlanner
 from .planning import ReplayPlanner
+from .public_http import BoundaryConfig
 from .service import Service
 
 
 def parser() -> argparse.ArgumentParser:
     command = argparse.ArgumentParser(description=__doc__)
     command.add_argument("--port", type=int, default=8765)
+    command.add_argument("--bind-host", default="127.0.0.1")
+    command.add_argument("--trusted-host", action="append", default=[])
+    command.add_argument("--public-origin", action="append", default=[])
+    command.add_argument("--session-create-limit", type=int)
+    command.add_argument("--post-limit", type=int)
     command.add_argument("--database", type=Path, default=Path(".local/runtime/cases.sqlite"))
     command.add_argument("--provider", choices=("replay", "bedrock", "agentcore"), default="replay")
     command.add_argument("--profile")
@@ -66,14 +72,36 @@ def configured_planner(args, account_lookup=aws_account):
                                    args.live_turn_limit)
 
 
+def configured_boundary(args: argparse.Namespace) -> BoundaryConfig:
+    if args.bind_host not in ("127.0.0.1", "localhost", "0.0.0.0"):
+        raise ValueError("Bind host must be 127.0.0.1, localhost or 0.0.0.0.")
+    if not 1 <= args.port <= 65535:
+        raise ValueError("Port must be between 1 and 65535.")
+    exposed = args.bind_host not in ("127.0.0.1", "localhost")
+    if not exposed and (args.trusted_host or args.public_origin or
+                        args.session_create_limit is not None or args.post_limit is not None):
+        raise ValueError("Public boundary settings require a non-loopback binding.")
+    if exposed and (not args.trusted_host or not args.public_origin):
+        raise ValueError("Non-loopback binding requires --trusted-host and --public-origin.")
+    if exposed and (args.session_create_limit is None or args.post_limit is None):
+        raise ValueError("Non-loopback binding requires explicit request limits.")
+    hosts = tuple(args.trusted_host) if exposed else ("127.0.0.1", "localhost")
+    origins = tuple(args.public_origin) if exposed else ()
+    return BoundaryConfig(hosts, origins,
+                          args.session_create_limit if args.session_create_limit is not None else 30,
+                          args.post_limit if args.post_limit is not None else 120)
+
+
 def main() -> None:
     command = parser()
     args = command.parse_args()
     try:
+        boundary = configured_boundary(args)
         planner = configured_planner(args)
     except ValueError as error:
         command.error(str(error))
-    uvicorn.run(create_app(Service(args.database, planner)), host="127.0.0.1", port=args.port)
+    uvicorn.run(create_app(Service(args.database, planner), boundary_config=boundary),
+                host=args.bind_host, port=args.port, workers=1, access_log=False)
 
 
 if __name__ == "__main__":

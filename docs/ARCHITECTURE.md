@@ -37,6 +37,7 @@ The default local workspace uses historical rules replay. Select Bedrock to run 
 | Request ledger | Claim work before inference; commit state and response receipt atomically |
 | Operator | Acknowledge/complete a review with a note, separately from agent work |
 | AgentCore adapter | Bind a turn to the reviewed Runtime version; validate the returned proposal and request hashes |
+| HTTP boundary | Admit requests from configured hosts/origins within burst limits; project browser-safe execution receipts |
 
 ## Retry and restart
 
@@ -47,6 +48,8 @@ A crashed process leaves a claim for up to five minutes. An expired claim can be
 The planner receives copies of case state and released packets. Tools stage proposals. The service builds the saved state itself: direct planner mutation, forged targets, missing actions and inconsistent tool results are rejected. Model/tool failure leaves the saved case unchanged.
 
 The live workspace also keeps its invocation allowance in SQLite. An atomic reservation commits before the wrapped planner runs, so restarts and failed or interrupted calls cannot reset the counter. The transaction closes before inference. A previously committed request returns from the receipt ledger before it reaches this counter. Reopening an allowance with a changed limit is rejected; a new named allowance is an explicit operator configuration choice.
+
+The HTTP layer has separate rolling-minute admission limits for session creation and all POSTs. These counters protect the current process; the SQLite invocation allowance persists across restarts. Public exposure requires explicit hosts, HTTPS origins and request limits before the CLI configures a planner. API projections preserve source/tool evidence and the operator's own response while omitting private Runtime transport identifiers. [Hosting contract](HOSTING.md).
 
 ## Memory across Runtime sessions
 
@@ -67,5 +70,6 @@ The transport binds the response to the request ID, case revision, state hash an
 | Sessions, claims and receipts | [service.py](../watershed_memory/service.py) |
 | Durable live invocation allowance | [persistent_budget.py](../watershed_memory/persistent_budget.py) |
 | HTTP and static serving | [api.py](../watershed_memory/api.py) |
+| Exposure, admission and browser projection | [public_http.py](../watershed_memory/public_http.py) |
 | Operator experience | [static](../watershed_memory/static/) |
 | Original reconciliation | [reconcile.py](../feasibility/reconcile.py) |

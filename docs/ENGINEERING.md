@@ -9,7 +9,7 @@ uv sync --frozen
 uv run watershed-memory --port 8765
 ```
 
-The server binds to loopback and serves only packaged static files. SQLite state lives under `.local/runtime/`; use `--database PATH` for a separate ledger. New replay creates an independent session without deleting previous work. The default workspace makes no AWS calls.
+The server binds to loopback by default and serves only packaged static files. SQLite state lives under `.local/runtime/`; use `--database PATH` for a separate ledger. New replay creates an independent session without deleting previous work. The default workspace makes no AWS calls. [Explicit exposure and interactive hosting](HOSTING.md) describe the separate web boundary and deployment acceptance.
 
 The included historical packets derive from the Gallinas archive and USGS gauge 08380500. Counts describe numeric archive entries, not independent sample counts or safety thresholds. Archive times use the documented MDT interpretation; replay availability is a window-end convention. [Packaged notice](../watershed_memory/data/NOTICE.md).
 

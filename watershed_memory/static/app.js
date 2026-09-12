@@ -112,7 +112,9 @@ import {isAmbiguousFailure, errorMessage, responseIsRecorded} from './request-st
       const cloud = execution.output?.agentcore;
       if (cloud) {
         const runtime = document.createElement('p');
-        runtime.textContent = `AgentCore · ${safe(cloud.qualifier)} · verified version ${safe(cloud.endpoint_version_verified_before_call)}`;
+        const stop = {STOP_REQUEST_ACCEPTED: 'session stop requested',
+          STOP_FAILED: 'session stop request failed', NOT_STARTED: 'session not started'};
+        runtime.textContent = `AgentCore · verified Runtime version ${safe(cloud.endpoint_version_verified_before_call)} · ${stop[cloud.stop_status] || 'session stop status unavailable'}`;
         receipt.appendChild(runtime);
       }
       list.appendChild(receipt);
