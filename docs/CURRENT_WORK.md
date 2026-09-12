@@ -23,6 +23,18 @@ Each operation atomically saves its applicable work change, revision or evidence
 
 Human notes stay in private receipts. The case projection exposes the structured plan, status, source references and schedule.
 
+## A named place, with a clear approval record
+
+The location registry gives future field plans an exact place and revision to reference. It includes the Gallinas USGS monitoring station with its published coordinates, coordinate accuracy and source attribution. Field sites additionally carry case-specific approval, allowed activities, the configured approval identity and approval time.
+
+The registry's authorization check requires the latest site revision. A withdrawn or replaced approval cannot authorize new work through an older record. Demonstration sites stay attached to demonstration cases, and station metadata provides a reference location without granting field access or permission to sample.
+
+The registry is implemented and tested. Structured field plans and result verification are the next workflow extension.
+
+- [Location registry and approval checks](../watershed_memory/current/locations.py)
+- [Bundled station reference](../watershed_memory/data/gallinas_location.json)
+- [Location behavior tests](../tests/test_current_locations.py) and [boundary tests](../tests/test_current_location_boundaries.py)
+
 ## Inspect and run
 
 - [Work transactions](../watershed_memory/current/case_store.py)
