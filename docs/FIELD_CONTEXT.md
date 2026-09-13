@@ -2,7 +2,7 @@
 
 The field-aware context connects a source observation with the team's current assignments and recent field results. It carries the exact report revision, evidence references, verification level and approved place, so a later agent turn can distinguish completed work from an unresolved inspection.
 
-The field-aware Strands workflow connects remembered results to the next saved proposal. It checks the source evidence, retrieves the team's exact field result and prepares permitted follow-up under the existing review. Human approval stays separate. Field controls on the operator screen are the next integration step.
+The field-aware Strands workflow connects remembered results to the next saved proposal. It checks the source evidence, retrieves the team's exact field result and prepares permitted follow-up under the existing review. The [operator desk](CURRENT_DESK.md) connects that proposal with human approval, reporting, evidence, verification and later corrections.
 
 ## A useful view of the case
 
@@ -59,11 +59,21 @@ A later correction, changed review or withdrawn site affects the current view. I
 
 An installed-package rehearsal demonstrated this on a copy of the saved USGS case. After capturing a partial result, simulated human actions corrected the report and changed the parent review; the rehearsal then supplied a later withdrawn site revision. A separate process recovered both the original context and the changed current view exactly. Source and agent-delivery records remained unchanged, and the rehearsal made no model or network calls.
 
+## Carry the same case into the agent invocation
+
+The current context has a complete, validated JSON representation: source measurements, selected earlier evidence, field assignments, report revisions and verification records travel together. Exact decimal values and UTC timestamps survive the round trip. Every nested record is checked again, including its field-evidence relationships. Unknown sources, inconsistent summaries and altered verification records are refused.
+
+The planner boundary binds the full model, instruction and SDK profile before dispatch reserves a turn. It distinguishes a validated failed turn from an uncertain invocation, preserving the application's saved attempt instead of silently retrying. The application remains responsible for committing the result.
+
+Local tests reconstruct all three field-result cases from this representation and run them through the actual Strands SDK with the handwritten model fixture. They preserve the exact report basis and leave the source database untouched. This validates the current transport foundation; the deployed AgentCore walkthrough still uses the separately verified historical workflow.
+
 ## Inspect the engineering
 
 - [One source-and-field snapshot](../watershed_memory/current/context_v3.py)
 - [Bounded field selection](../watershed_memory/current/field_context.py)
 - [Immutable context records](../watershed_memory/current/context_v3_types.py)
+- [Complete context transport](../watershed_memory/current/context_wire.py), [source-summary checks](../watershed_memory/current/context_wire_facts.py), and [round-trip and SDK tests](../tests/test_current_context_wire.py)
+- [Typed planner boundary](../watershed_memory/current/field_planner.py) and [profile/failure tests](../tests/test_current_field_planner_boundary.py)
 - [Exact capture and historical reconstruction](../watershed_memory/current/context_v3_reference.py)
 - [Field decision tools and replay](../watershed_memory/current/field_tools.py), [immutable decisions](../watershed_memory/current/field_assessment_types.py), and [shared attempt budget](../watershed_memory/current/field_tool_runtime.py)
 - [Three-outcome decision tests](../tests/test_current_field_tools.py) and [maximum-budget tests](../tests/test_current_field_tool_budget.py)

@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import math
 import time
-from dataclasses import asdict
 from importlib.metadata import version
 
 from strands import Agent, tool
@@ -14,10 +12,12 @@ from strands.models.model import Model
 from strands.tools.executors import SequentialToolExecutor
 
 from ..strands_agent import TurnBudget
-from .case_records import digest, encode
+from .case_records import digest
 from .case_types import _text
 from .context_v3_types import CurrentContextV3
+from .delivery_types import InvocationProfile
 from .field_delivery_types import CurrentExecutionV3, CurrentFailureV3
+from .field_planner import FieldPlannerErrorV3, FieldPlannerV3
 from .field_sdk_budget import FieldSDKToolBudget
 from .field_sdk_requests import FieldSDKRequestGuard
 from .field_tools import CurrentToolsV3
@@ -87,23 +87,13 @@ After staging both source and field decisions, finish briefly with end_turn.
 """
 
 
-class CurrentTurnErrorV3(RuntimeError):
+class CurrentTurnErrorV3(FieldPlannerErrorV3):
     """A redacted failure with an immutable record and detached public projections."""
 
-    def __init__(self, failure: CurrentFailureV3):
-        super().__init__("Field-aware Strands turn did not complete a valid staged assessment.")
-        self._failure = failure
-
-    @property
-    def failure(self) -> CurrentFailureV3:
-        return self._failure
-
-    @property
-    def evidence(self) -> dict:
-        return json.loads(encode(asdict(self.failure)))
+    pass
 
 
-class CurrentStrandsPlannerV3:
+class CurrentStrandsPlannerV3(FieldPlannerV3):
     """Execute after local setup, without a database handle or human mutation tools."""
 
     def __init__(
@@ -128,6 +118,15 @@ class CurrentStrandsPlannerV3:
             raise ValueError("field inference timeout must be within120 seconds")
         self.model, self.model_id = model, model_id
         self.scripted_test, self.max_calls, self.seconds = scripted_test, max_calls, float(seconds)
+
+    @property
+    def profile(self) -> InvocationProfile:
+        return InvocationProfile(
+            mode="SCRIPTED_SDK" if self.scripted_test else "STRANDS_CURRENT",
+            model_id=self.model_id,
+            instruction_version=INSTRUCTION_VERSION,
+            sdk_version=version("strands-agents"),
+        )
 
     def plan(self, context: CurrentContextV3) -> CurrentExecutionV3:
         if type(context) is not CurrentContextV3:

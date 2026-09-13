@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from importlib.metadata import version
 
 from .attention import AttentionResult
+from .case_types import _text
 from .context3_schema import ensure_schema
-from .delivery_types import AllowanceExceeded
+from .delivery_types import AllowanceExceeded, InvocationProfile
 from .dispatch_runner import DispatchRunner, DispatchTick
 from .field_delivery_types import FieldDeliveryReceipt
 from .field_dispatch_store import FieldDispatchStore, _settings_v3
-from .field_strands import CurrentStrandsPlannerV3, CurrentTurnErrorV3
+from .field_planner import FieldPlannerErrorV3, FieldPlannerV3
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,9 +48,20 @@ class FieldDispatchTick:
 class FieldDispatchRunner(DispatchRunner):
     """Run one v3 field turn while keeping all inference outside SQLite."""
 
-    def __init__(self, store: FieldDispatchStore, planner: CurrentStrandsPlannerV3, *, clock=None):
-        if type(store) is not FieldDispatchStore or type(planner) is not CurrentStrandsPlannerV3:
+    def __init__(self, store: FieldDispatchStore, planner: FieldPlannerV3, *, clock=None):
+        if type(store) is not FieldDispatchStore or not isinstance(planner, FieldPlannerV3):
             raise ValueError("typed field dispatch store and planner are required")
+        _text(getattr(planner, "model_id", None), "model_id", 1, 200)
+        if type(getattr(planner, "scripted_test", None)) is not bool or not callable(planner.plan):
+            raise ValueError("planner metadata is invalid")
+        if type(getattr(planner, "profile", None)) is not InvocationProfile:
+            raise ValueError("planner profile is invalid")
+        if (
+            planner.profile.model_id != planner.model_id
+            or planner.profile.mode != ("SCRIPTED_SDK" if planner.scripted_test else "STRANDS_CURRENT")
+            or planner.profile.instruction_version != "watershed-current-v3"
+        ):
+            raise ValueError("planner profile is incoherent")
         if clock is not None and not callable(clock):
             raise ValueError("clock must be callable")
         self.store = store
@@ -62,12 +73,9 @@ class FieldDispatchRunner(DispatchRunner):
             db.execute("BEGIN")
             ensure_schema(db)
             _, _, profile, _ = _settings_v3(db, case_id)
-        sdk = version("strands-agents")
         expected_mode = "SCRIPTED_SDK" if self.planner.scripted_test else "STRANDS_CURRENT"
         if (
-            profile.model_id != self.planner.model_id
-            or profile.instruction_version != "watershed-current-v3"
-            or profile.sdk_version != sdk
+            profile != self.planner.profile
             or profile.mode != expected_mode
         ):
             raise ValueError("planner profile differs from field dispatch settings")
@@ -92,7 +100,7 @@ class FieldDispatchRunner(DispatchRunner):
             raise ValueError("field dispatch reservation is missing")
         try:
             execution = self.planner.plan(reservation.context)
-        except CurrentTurnErrorV3 as error:
+        except FieldPlannerErrorV3 as error:
             try:
                 receipt = self.store.fail(reservation.attempt_id, error.failure, now=self.clock())
             except Exception:
