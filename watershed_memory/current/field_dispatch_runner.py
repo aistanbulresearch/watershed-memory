@@ -99,7 +99,7 @@ class FieldDispatchRunner(DispatchRunner):
         if step.status != "RESERVED" or reservation is None:
             raise ValueError("field dispatch reservation is missing")
         try:
-            execution = self.planner.plan(reservation.context)
+            execution = self.planner.plan_reserved(reservation)
         except FieldPlannerErrorV3 as error:
             try:
                 receipt = self.store.fail(reservation.attempt_id, error.failure, now=self.clock())

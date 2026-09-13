@@ -67,6 +67,8 @@ The planner boundary binds the full model, instruction and SDK profile before di
 
 Local tests reconstruct all three field-result cases from this representation and run them through the actual Strands SDK with the handwritten model fixture. They preserve the exact report basis and leave the source database untouched. This validates the current transport foundation; the deployed AgentCore walkthrough still uses the separately verified historical workflow.
 
+The current request and response protocol carries the saved attempt identity alongside that complete case. A response must match the exact request, model profile and report context, and its tool outputs are replayed against the supplied evidence before acceptance. A different attempt, altered evidence or a fabricated tool output is refused even when the message carries a recomputed checksum. These checks run locally with the actual Strands SDK and the handwritten model fixture; they prepare the current workflow for remote execution.
+
 ## Inspect the engineering
 
 - [One source-and-field snapshot](../watershed_memory/current/context_v3.py)
@@ -74,6 +76,7 @@ Local tests reconstruct all three field-result cases from this representation an
 - [Immutable context records](../watershed_memory/current/context_v3_types.py)
 - [Complete context transport](../watershed_memory/current/context_wire.py), [source-summary checks](../watershed_memory/current/context_wire_facts.py), and [round-trip and SDK tests](../tests/test_current_context_wire.py)
 - [Typed planner boundary](../watershed_memory/current/field_planner.py) and [profile/failure tests](../tests/test_current_field_planner_boundary.py)
+- [Reserved invocation](../tests/test_current_reserved_planner.py), [request and response protocol](../watershed_memory/current/remote_protocol.py), [case identity and result replay](../watershed_memory/current/remote_types.py), and [protocol tests](../tests/test_current_remote_protocol.py)
 - [Exact capture and historical reconstruction](../watershed_memory/current/context_v3_reference.py)
 - [Field decision tools and replay](../watershed_memory/current/field_tools.py), [immutable decisions](../watershed_memory/current/field_assessment_types.py), and [shared attempt budget](../watershed_memory/current/field_tool_runtime.py)
 - [Three-outcome decision tests](../tests/test_current_field_tools.py) and [maximum-budget tests](../tests/test_current_field_tool_budget.py)

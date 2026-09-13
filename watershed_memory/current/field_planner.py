@@ -9,7 +9,7 @@ from dataclasses import asdict
 from .case_records import encode
 from .context_v3_types import CurrentContextV3
 from .delivery_types import InvocationProfile
-from .field_delivery_types import CurrentExecutionV3, CurrentFailureV3
+from .field_delivery_types import CurrentExecutionV3, CurrentFailureV3, FieldDeliveryReservation
 
 
 class FieldPlannerV3(ABC):
@@ -28,6 +28,14 @@ class FieldPlannerV3(ABC):
     def plan(self, context: CurrentContextV3) -> CurrentExecutionV3:
         """Plan from trusted context without committing state."""
         raise NotImplementedError
+
+    def plan_reserved(self, reservation: FieldDeliveryReservation) -> CurrentExecutionV3:
+        """Plan from the exact durable reservation identity."""
+        if type(reservation) is not FieldDeliveryReservation:
+            raise ValueError("expected an exact field delivery reservation")
+        if reservation.profile != self.profile:
+            raise ValueError("reserved planner profile differs")
+        return self.plan(reservation.context)
 
 
 class FieldPlannerErrorV3(RuntimeError):
