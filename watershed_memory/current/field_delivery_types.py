@@ -127,7 +127,8 @@ class CurrentFailureV3:
             or self.mode not in {"SCRIPTED_SDK", "STRANDS_CURRENT"}
             or self.instruction_version != "watershed-current-v3"
             or self.status != "FAILED"
-            or self.code != "CURRENT_V3_TURN_FAILED"
+            or type(self.code) is not str
+            or self.code not in {"CURRENT_V3_TURN_FAILED", "CURRENT_V3_TOOL_BUDGET_EXHAUSTED"}
         ):
             raise ValueError("invalid failure identity")
         for value in (self.model_id, self.instruction_version, self.sdk_version):

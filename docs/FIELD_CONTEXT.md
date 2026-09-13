@@ -2,7 +2,7 @@
 
 The field-aware context connects a source observation with the team's current assignments and recent field results. It carries the exact report revision, evidence references, verification level and approved place, so a later agent turn can distinguish completed work from an unresolved inspection.
 
-The context, historical reconstruction, field decision tools and persistent proposal delivery are implemented. A validated recommendation becomes a saved proposal that awaits human approval. Field-aware Strands dispatch and browser controls are the next integration steps.
+The field-aware Strands workflow connects remembered results to the next saved proposal. It checks the source evidence, retrieves the team's exact field result and prepares permitted follow-up under the existing review. Human approval stays separate. Field controls on the operator screen are the next integration step.
 
 ## A useful view of the case
 
@@ -27,17 +27,27 @@ The tools check the report identity, revision and verification level rather than
 
 An agent must read the source assessment, inspect existing assignments and relevant results, and look up an approved place before staging a proposal. That proposal carries an exact parent task, site revision, activity and bounded future work window. Approval, field reporting and verification remain separate human actions.
 
-Each staged decision has a replayable tool trace. One shared sixteen-attempt budget covers source and field tools, including failed requests. Tests exercise both maximum-length paths and permanent exhaustion; existing source-only tools keep their twelve-attempt limit.
+Each staged decision has a replayable tool trace. Direct source and field tools share a sixteen-attempt budget. The Strands adapter separately admits at most sixteen assembled SDK tool requests, including requests subsequently refused for invalid names or arguments. An oversized batch is refused before any member executes and adds zero admitted requests; a separate failure code records exhaustion. Existing source-only tools keep their twelve-attempt limit.
+
+## From a field result to the next Strands decision
+
+The adapter runs eleven tools with sequential execution and at most eight model responses. It completes the source assessment before opening field context, then inspects the relevant results and approved locations. Strict input checks preserve exact argument types and required explicit nulls before SDK conversion. Opaque provider reasoning signatures stay outside domain arguments and receipts.
+
+The three-result integration tests run the actual Strands SDK with a clearly labelled handwritten model fixture. Six responses read actual tool outputs and select the corresponding next action. A newer result belonging to another review cannot replace the selected review's basis. These tests verify SDK integration and controlled decision behavior; real-provider execution is a separate acceptance step.
+
+The dispatcher reserves the turn, releases its database transaction during inference, and saves the validated result in a new transaction. Independent writer probes succeed during every model response. A quiet check after completion makes no model call. An explicit v2-to-v3 upgrade preserves earlier dispatch history and its original execution profile.
+
+A separate installed-package rehearsal exercised all three outcomes against copies of the same saved USGS case: three scripted SDK turns, eighteen responses and one unapproved follow-up only in the partial-result case. Checks before the scheduled review and after completion stayed quiet. A fresh process reopened every case and recovered both earlier v2 receipts and the new field-aware decision, including its exact report basis. Retrying the finished decision preserved the original receipt and database bytes. Field actions in this rehearsal are simulated; its handwritten model verifies the integration, while real-provider reasoning remains a separate acceptance step.
 
 ## One decision becomes one saved proposal
 
-The delivery transaction saves the source-review work, one optional field proposal and the finished decision together. When processing a canonical source event, its acknowledgement belongs to that same transaction. An interruption rolls back the finish; a repeated or concurrent delivery returns the original receipt without opening another assignment.
+The delivery transaction saves the source-review work, one optional field proposal and the finished decision together. Automatic dispatch also saves its source outcome, comparison baseline and handled check in that transaction. When processing a canonical source event, its acknowledgement belongs to the same transaction. An interruption rolls back the finish; a repeated or concurrent delivery returns the original receipt without opening another assignment.
 
 The agent can create an **unapproved proposal**. Only a separate human action can approve the plan or record its result. A later approval changes the current plan while preserving the original agent proposal and the evidence behind it.
 
 If the case changes during the turn, or its chosen site approval or work window is no longer valid, the delivery is marked stale and no proposal or follow-through is saved. Receipt reads check the exact source work, field proposal, acknowledgement and case revision against the recorded decision.
 
-The three-outcome delivery and interruption tests use synthetic execution records with actual tool replay and SQLite transactions. They establish persistent workflow behavior; the current field-aware SDK and provider runs have separate integration gates.
+The delivery and interruption tests use synthetic execution records with actual tool replay and SQLite transactions. The SDK runner tests additionally execute a controlled Strands turn that saves an unapproved field proposal, reads its original receipt and leaves the following quiet check untouched. Receipt reconciliation refuses a source/field context mismatch or a lower-level commit that did not complete its dispatcher bookkeeping.
 
 An installed-package rehearsal used the saved USGS case and an explicitly simulated partial field report to save one follow-up proposal. A separate human approval advanced the current plan. After a process restart, the original agent proposal, current human approval, partial result and delivery receipt all matched exactly; retrying the delivery created no duplicate work. The rehearsal used a synthetic execution record and made no model or network calls.
 
@@ -58,6 +68,9 @@ An installed-package rehearsal demonstrated this on a copy of the saved USGS cas
 - [Field decision tools and replay](../watershed_memory/current/field_tools.py), [immutable decisions](../watershed_memory/current/field_assessment_types.py), and [shared attempt budget](../watershed_memory/current/field_tool_runtime.py)
 - [Three-outcome decision tests](../tests/test_current_field_tools.py) and [maximum-budget tests](../tests/test_current_field_tool_budget.py)
 - [Atomic proposal delivery](../watershed_memory/current/field_delivery_store.py), [agent authority boundary](../watershed_memory/current/field_agent.py), and [receipt validation](../watershed_memory/current/field_delivery_records.py)
+- [Field-aware Strands adapter](../watershed_memory/current/field_strands.py), [SDK request admission](../watershed_memory/current/field_sdk_budget.py), and [exact argument checks](../watershed_memory/current/field_sdk_requests.py)
+- [Automatic field dispatch](../watershed_memory/current/field_dispatch_store.py), [bounded runner](../watershed_memory/current/field_dispatch_runner.py), and [actual SDK runner tests](../tests/test_current_field_dispatch_runner.py)
+- [Paired SDK decisions](../tests/test_current_field_strands.py), [explicit model fixture](../tests/test_current_field_sdk_fixture.py), and [dispatch integrity tests](../tests/test_current_field_dispatch_integrity.py)
 - [Persisted outcome tests](../tests/test_current_field_delivery_store.py), [rollback and concurrent delivery tests](../tests/test_current_field_delivery_boundaries.py), and [receipt integrity tests](../tests/test_current_field_delivery_integrity.py)
 - [Context and restart tests](../tests/test_current_context_v3.py), [record tests](../tests/test_current_context_v3_types.py), and [boundary tests](../tests/test_current_context_v3_boundaries.py)
 
