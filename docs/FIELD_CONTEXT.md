@@ -69,6 +69,10 @@ Local tests reconstruct all three field-result cases from this representation an
 
 The current request and response protocol carries the saved attempt identity alongside that complete case. A response must match the exact request, model profile and report context, and its tool outputs are replayed against the supplied evidence before acceptance. A different attempt, altered evidence or a fabricated tool output is refused even when the message carries a recomputed checksum. These checks run locally with the actual Strands SDK and the handwritten model fixture; they prepare the current workflow for remote execution.
 
+The current AgentCore connector now carries that reserved case through the runtime HTTP handler and back to local delivery. It verifies the named runtime version before one invocation, reads a bounded complete response, and records each attempt separately. A lost response holds the saved attempt; a human correction during inference makes the returned proposal stale. A validated result survives a session-cleanup or logging failure. The production entrypoint fixes the model and execution mode at startup.
+
+These paths are tested through the actual local AgentCore and Strands SDKs with a handwritten model, plus real loopback HTTP responses through the AWS SDK's `botocore.response.StreamingBody` response-stream type. These local tests make no AWS service calls. The deployed cloud walkthrough continues to identify its separately verified historical workflow.
+
 ## Inspect the engineering
 
 - [One source-and-field snapshot](../watershed_memory/current/context_v3.py)
@@ -77,6 +81,8 @@ The current request and response protocol carries the saved attempt identity alo
 - [Complete context transport](../watershed_memory/current/context_wire.py), [source-summary checks](../watershed_memory/current/context_wire_facts.py), and [round-trip and SDK tests](../tests/test_current_context_wire.py)
 - [Typed planner boundary](../watershed_memory/current/field_planner.py) and [profile/failure tests](../tests/test_current_field_planner_boundary.py)
 - [Reserved invocation](../tests/test_current_reserved_planner.py), [request and response protocol](../watershed_memory/current/remote_protocol.py), [case identity and result replay](../watershed_memory/current/remote_types.py), and [protocol tests](../tests/test_current_remote_protocol.py)
+- [Current AgentCore connector](../watershed_memory/current/field_agentcore.py), [runtime handler](../watershed_memory/current/runtime_handler.py), and [production entrypoint](../runtime/current_entrypoint.py)
+- [End-to-end SDK delivery tests](../tests/test_current_agentcore_flow.py), [bounded response handling](../watershed_memory/current/agentcore_transport.py), and [native AWS stream tests](../tests/test_current_agentcore_native_stream.py)
 - [Exact capture and historical reconstruction](../watershed_memory/current/context_v3_reference.py)
 - [Field decision tools and replay](../watershed_memory/current/field_tools.py), [immutable decisions](../watershed_memory/current/field_assessment_types.py), and [shared attempt budget](../watershed_memory/current/field_tool_runtime.py)
 - [Three-outcome decision tests](../tests/test_current_field_tools.py) and [maximum-budget tests](../tests/test_current_field_tool_budget.py)
