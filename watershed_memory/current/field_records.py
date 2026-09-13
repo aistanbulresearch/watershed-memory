@@ -26,6 +26,27 @@ def _same(record, raw, mapping):
             raise ValueError("field row identity differs from its saved record")
 
 
+def require_location_versions(db, case_id, entries):
+    """Keep an already used site version immutable, including closed plan history."""
+    if not db.in_transaction:
+        raise ValueError("location identity requires the caller's transaction")
+    selected = {(item.location_id, item.revision): item for item in entries}
+    seen_saved = {}
+    for raw in db.execute(
+        "SELECT case_id,plan_id,revision,record_json FROM field_plan_revisions WHERE case_id=?",
+        (case_id,),
+    ):
+        saved = decode(raw["record_json"], FieldPlanRecord)
+        _same(saved, raw, {"case_id": "case_id", "plan_id": "plan_id", "revision": "revision"})
+        identity = (saved.location.location_id, saved.location.revision)
+        if identity in seen_saved and seen_saved[identity] != saved.location:
+            raise ValueError("saved field history contains conflicting location revisions")
+        seen_saved[identity] = saved.location
+        proposed = selected.get(identity)
+        if proposed is not None and proposed != saved.location:
+            raise ValueError("a saved field location revision cannot be redefined")
+
+
 def plan(db, case_id, plan_id, revision=None):
     current = db.execute(
         "SELECT * FROM field_plans WHERE case_id=? AND plan_id=?", (case_id, plan_id)
@@ -206,6 +227,7 @@ def snapshot(db, case_id, plan_id):
 
 
 def save_plan(db, value, *, new=False):
+    require_location_versions(db, value.case_id, (value.location,))
     if new:
         db.execute(
             "INSERT INTO field_plans VALUES(?,?,?,?,?,?,?,?,?,?)",

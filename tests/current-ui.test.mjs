@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { createResponseMachine } from '../watershed_memory/static/current-state.mjs';
+import * as currentState from '../watershed_memory/static/current-state.mjs';
+const {createResponseMachine} = currentState;
 
 class Node {
   constructor(tag) {
@@ -133,16 +134,14 @@ function harness(responses, saved = storage()) {
     if (calls === 1) return { ok: false, status: 400, json: async () => ({ detail: 'Correct the plan.' }) };
     return { ok: true, json: async () => confirmed(sent.title, sent.next_check_at) };
   };
-  const moduleText = fs.readFileSync(new URL('../watershed_memory/static/current-state.mjs', import.meta.url), 'utf8')
-    .replaceAll('export ', '');
   const source = fs.readFileSync(new URL('../watershed_memory/static/current.js', import.meta.url), 'utf8')
     .replace(/^import[^\n]+\n/, '');
   const context = vm.createContext({
+    ...currentState,
     console, document, fetch, sessionStorage: saved, location: { origin: 'http://localhost:8771' },
     crypto: { randomUUID: () => 'new-request' }, Date, URL, encodeURIComponent, setTimeout,
   });
-  vm.runInContext(moduleText + '\
-' + source, context);
+  vm.runInContext(source, context);
   return { document, storage: context.sessionStorage, get calls() { return calls; } };
 }
 test('restored MODIFY response unlocks after 400 and submits corrected plan with a new identity', async () => {

@@ -103,9 +103,16 @@ def decide(db, case, command, principal, now, locations):
     if command.action == "APPROVE":
         if value.status == "APPROVED":
             raise WorkflowConflict("field plan is already approved")
-        _place(
-            locations, case, value.location.location_id, value.location.revision, value.spec, now
+        place = _place(
+            locations,
+            case,
+            value.location.location_id,
+            value.location.revision,
+            value.spec,
+            now,
         )
+        if place != value.location:
+            raise ValueError("configured site differs from the exact proposed location revision")
     if command.action == "DEFER" and not (
         now < command.defer_until <= now + timedelta(days=30)
         and command.defer_until < value.spec.window_end

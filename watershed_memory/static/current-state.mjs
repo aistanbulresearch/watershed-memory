@@ -1,4 +1,5 @@
 /* Durable browser request identity for the local current-case operator desk. */
+import {validFieldContext} from './field-records.mjs';
 const ACTIONS = ['APPROVE', 'MODIFY', 'DEFER', 'DISMISS', 'CANCEL'];
 const STATUSES = ['PROPOSED', 'APPROVED', 'DEFERRED', 'DISMISSED', 'CANCELLED'];
 const identifier = value => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/.test(value);
@@ -16,6 +17,8 @@ export function validSnapshot(value, caseId = null) {
   if (!value || !identifier(value.case?.case_id) || (caseId && value.case.case_id !== caseId) ||
       !integer(value.case.revision) || typeof value.case.simulated !== 'boolean' || !time(value.evaluated_at)) return false;
   const source = value.source;
+  if (Object.hasOwn(value,'current_field_work') && !validFieldContext(value.current_field_work,
+      value.case.case_id,value.case.simulated,value.evaluated_at,value.case.revision)) return false;
   if (!source || !text(source.label, 256) || !identifier(source.source_id) || !text(source.station_id, 64) ||
       !optionalTime(source.collected_through) || !time(source.next_poll_at) ||
       !['observation_count', 'event_count', 'pending_count'].every(key => integer(source[key])) ||
@@ -33,6 +36,11 @@ export function validSnapshot(value, caseId = null) {
       text(work.reason, 700) && STATUSES.includes(work.status) && text(work.kind, 64) &&
       optionalTime(work.next_check_at) && time(work.created_at) && time(work.updated_at) &&
       strings(work.evidence_event_ids, 3, eventId) && strings(work.available_actions, 5) && work.available_actions.every(a => ACTIONS.includes(a)))) return false;
+  const field = value.current_field_work;
+  if (field?.proposal_targets?.some(target => !field.approved_locations.length ||
+      !value.work.some(work => work.task_id === target.task_id && work.revision === target.revision && work.title === target.title &&
+        ['OBSERVATION_REVIEW','COVERAGE_REVIEW'].includes(work.kind) && ['PROPOSED','APPROVED','DEFERRED'].includes(work.status)) ||
+      [...field.current_plans,...field.stranded_plans].some(work => work.plan.task_id === target.task_id))) return false;
   if (!Array.isArray(value.dimensions) || value.dimensions.length !== 4 || !value.dimensions.every(d =>
       text(d.id, 32) && text(d.label, 100) && text(d.status, 64) && text(d.detail, 700))) return false;
   if (!Array.isArray(value.assessments) || value.assessments.length > 10 || !value.assessments.every(a =>

@@ -47,6 +47,16 @@ An installed-package HTTP rehearsal exercised a saved USGS case with simulated f
 
 Field response payloads omit private notes. A malformed command is rejected before a write; a changed request with a reused identity conflicts. A saved result, its attached evidence and its verification remain distinct, so correcting a report requires verification of the new revision.
 
+For an existing field case, the local launcher accepts explicit trusted site files and a local operator identity:
+
+```sh
+uv run python -m watershed_memory.current.desk_cli --db .local/current-work.sqlite --case YOUR_EXISTING_CASE_ID --field-location .local/approved-site.json --field-principal-id local-operator --port 8771
+```
+
+Each site file contains one canonical `LocationEntry` JSON record; repeat `--field-location` for additional versions. Configure both site files and the operator identity together. The local operator has coordinator, field-operator and verifier permissions within that case. These are trusted launch settings, never browser-supplied roles. A used site version keeps its original meaning across plan history; changed site information requires a new version. Invalid replay databases and conflicting site history are rejected before field-schema initialization.
+
+The field browser modules validate all seven operation receipts against the exact submitted plan, report and evidence. Their recovery tests cover temporary HTTP failures, storage failures and a past verification beside a corrected current result. An additional contract test sends eleven actual local HTTP exchanges through those same JavaScript modules, including every operation and all three plan decisions. These modules prepare the field-form integration; the current screen continues to provide the source-review controls described above.
+
 ## Inspect the engineering
 
 - [Read-only case projection and response reconciliation](../watershed_memory/current/desk.py)
@@ -55,6 +65,7 @@ Field response payloads omit private notes. A malformed command is rejected befo
 - [Desk, privacy and revision checks](../tests/test_current_desk.py), [HTTP boundary checks](../tests/test_current_api.py) and [launch checks](../tests/test_current_desk_cli.py)
 - [Current field views](../watershed_memory/current/field_desk_records.py), [historical assessment restoration](../watershed_memory/current/field_desk_history.py) and [typed field requests](../watershed_memory/current/field_http_types.py)
 - [Field service and retry checks](../tests/test_current_field_desk_responses.py) and [field HTTP checks](../tests/test_current_field_api.py)
+- [Field confirmation and retry modules](../watershed_memory/static/field-state.mjs), [strict public records](../watershed_memory/static/field-records.mjs) and [Python-to-browser contract check](../tests/test_current_field_browser_contract.py)
 
 ```sh
 uv run pytest tests/test_current_desk.py tests/test_current_api.py tests/test_current_desk_cli.py -q

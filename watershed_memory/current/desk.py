@@ -345,7 +345,12 @@ class CurrentDesk:
                 "assessments": assessments,
             }
             if field_context is not None:
+                from .field_desk_targets import proposal_targets
+
                 value["current_field_work"] = project_field(field_context, self.principal)
+                value["current_field_work"]["proposal_targets"] = proposal_targets(
+                    db, field_context, self.principal
+                )
                 if field_context.state == "PRESENT":
                     value["dimensions"][2].update(
                         {
