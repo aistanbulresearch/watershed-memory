@@ -1,6 +1,6 @@
 # The next decision, with the team's plan still in view
 
-The current field desk puts three things together: the station's latest collected readings, the plan the operator is carrying forward, and the next check. The operator can approve, modify, defer, dismiss or cancel work. Each response becomes part of the same durable case.
+The current field desk connects the station's latest collected readings, the team's plan, field results and the next check. An operator can plan an inspection, approve the work, record its outcome and review its evidence in the same durable case.
 
 Source evidence and execution details sit one level deeper. Open a saved assessment to see its model profile, actual tool sequence, decision and linked evidence. Open the plan history to inspect its revision and source references.
 
@@ -41,7 +41,9 @@ The first browser rehearsal uses genuinely fetched USGS observations and explici
 
 The field-enabled service follows an agent's proposed inspection through a human-approved plan, a reported result, supporting evidence and an authorized verification. It also preserves corrections: a later partial result remains visible beside the original verification receipt. A past agent assessment continues to show the exact result and evidence it used at the time.
 
-The service exposes seven typed operations: propose, decide, modify, report, correct, attach evidence and verify. Applications bind an initialized `FieldStore` and a trusted `FieldPrincipal` to `CurrentDesk`; the server supplies the case and operator authority. The field routes are `GET /api/current/field-work/{plan_id}` and `POST /api/current/field-responses`. These are service capabilities; the browser controls above cover source-review work.
+The screen gives each field plan a purpose, approved site, assigned role and time window. Choose **Modify and approve plan** to approve a revised assignment explicitly. Record **Completed**, **Partly completed** or **Not performed**, then attach evidence to that particular result revision. **Verify report** displays the exact evidence being reviewed before accepting the verification scope.
+
+The service exposes seven typed operations: propose, decide, modify, report, correct, attach evidence and verify. Applications bind an initialized `FieldStore` and a trusted `FieldPrincipal` to `CurrentDesk`; the server supplies the case and operator authority. The browser uses `GET /api/current/field-work/{plan_id}` and `POST /api/current/field-responses` for these controls.
 
 An installed-package HTTP rehearsal exercised a saved USGS case with simulated field work: revise and approve an agent proposal in one human action, report completion, attach an inspection record, then lose the confirmation after verification saved. A later correction changed the result to partial. Retrying the original request returned its original verified receipt alongside that newer result. A separate process recovered the same state without changing any database table or byte; all three earlier assessments retained their original evidence. This rehearsal used local HTTP handlers and made no model or cloud calls.
 
@@ -55,7 +57,11 @@ uv run python -m watershed_memory.current.desk_cli --db .local/current-work.sqli
 
 Each site file contains one canonical `LocationEntry` JSON record; repeat `--field-location` for additional versions. Configure both site files and the operator identity together. The local operator has coordinator, field-operator and verifier permissions within that case. These are trusted launch settings, never browser-supplied roles. A used site version keeps its original meaning across plan history; changed site information requires a new version. Invalid replay databases and conflicting site history are rejected before field-schema initialization.
 
-The field browser modules validate all seven operation receipts against the exact submitted plan, report and evidence. Their recovery tests cover temporary HTTP failures, storage failures and a past verification beside a corrected current result. An additional contract test sends eleven actual local HTTP exchanges through those same JavaScript modules, including every operation and all three plan decisions. These modules prepare the field-form integration; the current screen continues to provide the source-review controls described above.
+The installed-browser rehearsal exercised every field operation, including approval, deferral and cancellation. A second browser tab added evidence while a verification form was open; the desk rejected the outdated form and showed the updated record. A later verification saved but lost its confirmation. After a later response corrected the result to partial, reloading and retrying the original response displayed both facts: **the original report was verified; the current result is partly completed and awaits its own evidence review**. The rehearsal used saved USGS observations and simulated field work under one trusted local operator identity, with no new model or cloud calls.
+
+Pending field and source responses share one pause on new actions while inspection stays available. Recent results remain distinct from the **Historical field evidence used by this assessment** panel: a past decision retains its exact report revision and verification basis even after newer results move that work out of the short current list. The saved agent proposal is shown alongside the decision that produced it.
+
+The field browser modules validate all seven operation receipts against the exact submitted plan, report and evidence. Their recovery tests cover temporary HTTP failures, storage failures and a past verification beside a corrected current result. An additional contract test sends eleven actual local HTTP exchanges through those same JavaScript modules, including every operation and all three plan decisions.
 
 ## Inspect the engineering
 
@@ -66,8 +72,10 @@ The field browser modules validate all seven operation receipts against the exac
 - [Current field views](../watershed_memory/current/field_desk_records.py), [historical assessment restoration](../watershed_memory/current/field_desk_history.py) and [typed field requests](../watershed_memory/current/field_http_types.py)
 - [Field service and retry checks](../tests/test_current_field_desk_responses.py) and [field HTTP checks](../tests/test_current_field_api.py)
 - [Field confirmation and retry modules](../watershed_memory/static/field-state.mjs), [strict public records](../watershed_memory/static/field-records.mjs) and [Python-to-browser contract check](../tests/test_current_field_browser_contract.py)
+- [Field forms](../watershed_memory/static/field-forms.mjs), [browser controls](../watershed_memory/static/field-controls.mjs), [historical field evidence](../watershed_memory/static/field-history.mjs) and [integrated browser behavior checks](../tests/current-field-ui.test.mjs)
 
 ```sh
 uv run pytest tests/test_current_desk.py tests/test_current_api.py tests/test_current_desk_cli.py -q
 node --test tests/current-state.test.mjs tests/current-ui.test.mjs
+node --test tests/field-forms.test.mjs tests/current-field-ui.test.mjs tests/field-history.test.mjs
 ```

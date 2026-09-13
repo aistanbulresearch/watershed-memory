@@ -266,6 +266,9 @@ main {
 }
 .field { display: grid; gap: 5px; margin: 13px 0; }
 .field label { font: 700 12px Arial, sans-serif; }
+.field-checkbox { display: flex; align-items: center; gap: 12px; }
+.field-checkbox input[type="checkbox"] { width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--forest); }
+.field-checkbox label { flex: 1; }
 .field textarea, .field input, .field select {
   width: 100%;
   padding: 10px;
@@ -284,6 +287,7 @@ main {
 .button:focus-visible,
 .field input:focus-visible,
 .field textarea:focus-visible,
+.field select:focus-visible,
 summary:focus-visible {
   outline: 3px solid var(--amber);
   outline-offset: 3px;

@@ -3,6 +3,10 @@ import test from 'node:test';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import * as currentState from '../watershed_memory/static/current-state.mjs';
+import * as fieldState from '../watershed_memory/static/field-state.mjs';
+import * as fieldUI from '../watershed_memory/static/field-ui.mjs';
+import * as fieldControls from '../watershed_memory/static/field-controls.mjs';
+import * as fieldHistory from '../watershed_memory/static/field-history.mjs';
 const {createResponseMachine} = currentState;
 
 class Node {
@@ -135,9 +139,9 @@ function harness(responses, saved = storage()) {
     return { ok: true, json: async () => confirmed(sent.title, sent.next_check_at) };
   };
   const source = fs.readFileSync(new URL('../watershed_memory/static/current.js', import.meta.url), 'utf8')
-    .replace(/^import[^\n]+\n/, '');
+    .replace(/^import[^\n]+\n/gm, '');
   const context = vm.createContext({
-    ...currentState,
+    ...currentState, ...fieldState, ...fieldUI, ...fieldControls, ...fieldHistory,
     console, document, fetch, sessionStorage: saved, location: { origin: 'http://localhost:8771' },
     crypto: { randomUUID: () => 'new-request' }, Date, URL, encodeURIComponent, setTimeout,
   });

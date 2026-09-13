@@ -1,8 +1,15 @@
 import { createResponseMachine, printable, validSnapshot } from './current-state.mjs';
+import { createFieldResponseMachine } from './field-state.mjs';
+import { renderFieldPanel } from './field-ui.mjs';
+import { createFieldControls } from './field-controls.mjs';
+import { renderFieldAssessment } from './field-history.mjs';
 
 const app = document.querySelector('#app');
 const badge = document.querySelector('#mode-badge');
-const state = { data: null, machine: null, error: null, notice: null, loading: false, dialog: null, storageError: false };
+const state = { data: null, machine: null, fieldMachine: null, fieldLoading: false, fieldReceiptPlanId: null,
+  error: null, notice: null, loading: false, dialog: null, storageError: false };
+const fieldControls = createFieldControls({state,app,element,button,fact,date: value => date(value),request,render,load,blocked,
+  newId: () => crypto.randomUUID()});
 const labels = {
   APPROVE: 'Approve', MODIFY: 'Modify plan', DEFER: 'Defer', DISMISS: 'Dismiss', CANCEL: 'Cancel plan',
   PROPOSED: 'Your decision needed', APPROVED: 'Approved plan', DEFERRED: 'Deferred',
@@ -51,7 +58,8 @@ function disclosure(title) {
   return node;
 }
 function blocked() {
-  return state.loading || state.error !== null || state.storageError || Boolean(state.machine?.pending);
+  return state.loading || state.fieldLoading || state.error !== null || state.storageError ||
+    Boolean(state.machine?.pending || state.fieldMachine?.pending);
 }
 async function request(path, options = {}) {
   const response = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
@@ -144,6 +152,8 @@ function technicalPanel() {
           (decision.reference_ids || []).forEach(id => entry.append(fact('Compared source interval', id)));
           content.append(entry);
         });
+        const historicalField = renderFieldAssessment(data, state.data.case.case_id, state.data.case.simulated, {element,fact,date});
+        if (historicalField) content.append(historicalField);
       } catch (_) {
         content.replaceChildren(element('p', 'This saved assessment could not be loaded. Try again shortly.', 'notice'));
         control.disabled = false;
@@ -155,17 +165,19 @@ function technicalPanel() {
 }
 
 function render() {
-  app.replaceChildren(); app.setAttribute('aria-busy', String(state.loading));
+  app.replaceChildren(); app.setAttribute('aria-busy', String(state.loading || state.fieldLoading));
   if (state.error) app.append(element('p', state.error, 'notice'));
   if (state.notice) app.append(element('p', state.notice, 'notice success'));
   const refresh = button(state.loading ? 'Refreshing…' : 'Refresh saved case', load, true);
-  refresh.id = 'refresh-case'; refresh.disabled = state.loading || Boolean(state.machine?.busy);
+  refresh.id = 'refresh-case'; refresh.disabled = state.loading || state.fieldLoading || Boolean(state.machine?.busy || state.fieldMachine?.busy);
   app.append(refresh);
   if (!state.data) return;
   badge.textContent = state.data.case.simulated ? 'Simulated operator case · source readings' : 'Current operator case';
   const hero = element('section', null, 'hero');
+  const caseHeading = element('h1', state.data.source.label.split(' - USGS ')[0]);
+  caseHeading.id = 'case-heading'; caseHeading.setAttribute('tabindex', '-1');
   hero.append(element('p', 'WATERSHED MEMORY / CURRENT FIELD DESK', 'eyebrow'),
-    element('h1', state.data.source.label.split(' - USGS ')[0]), element('p', 'New readings arrive. The work carries forward.', 'lede'));
+    caseHeading, element('p', 'New readings arrive. The work carries forward.', 'lede'));
   app.append(hero);
   if (state.machine?.pending) {
     const notice = element('section', null, 'notice pending-response');
@@ -174,9 +186,21 @@ function render() {
       button('Review saved response', () => responseDialog(null, null, state.machine.pending)));
     app.append(notice);
   }
+  if (state.fieldMachine?.pending) {
+    const notice = element('section', null, 'notice pending-response');
+    notice.append(element('h2', 'One field response is awaiting confirmation'),
+      element('p', 'The exact field response is saved in this tab. Review and retry it without creating another action.'),
+      button('Review saved field response', () => fieldControls.restore()));
+    app.append(notice);
+  }
+  if (state.fieldReceiptPlanId) app.append(button('Inspect confirmed field record', () => fieldControls.inspect(state.fieldReceiptPlanId), true));
   if (state.storageError) app.append(element('p', 'The saved response store could not be read. Decisions are paused until local storage can be reconciled.', 'notice'));
   if (state.data.dispatch?.active_attempt_id) app.append(element('p', `Agent review: ${words(state.data.dispatch.active_status)}. Its saved attempt is held for reconciliation.`, 'notice'));
-  app.append(workPanel(), sourcePanel(state.data.source));
+  app.append(workPanel());
+  const field = renderFieldPanel(state.data, {element,button,panel,fact,date,blocked:blocked(),
+    onAction: intent => fieldControls.action(intent), onInspect: id => fieldControls.inspect(id)});
+  if (field) app.append(field);
+  app.append(sourcePanel(state.data.source));
   const dimensions = panel('Four parts of the same watershed');
   const grid = element('div', null, 'dimension-grid');
   state.data.dimensions.forEach(item => {
@@ -187,7 +211,7 @@ function render() {
 }
 
 function responseDialog(task, action, pending = null) {
-  if (state.dialog || (!pending && blocked())) return;
+  if (state.dialog || state.fieldLoading || state.fieldMachine?.busy || (!pending && blocked())) return;
   const originalFocus = document.activeElement;
   const command = pending;
   const targetId = task?.task_id || command.task_id;
@@ -282,7 +306,7 @@ function responseDialog(task, action, pending = null) {
 }
 
 async function load() {
-  if (state.loading || state.machine?.busy || state.dialog) return;
+  if (state.loading || state.fieldLoading || state.machine?.busy || state.fieldMachine?.busy || state.dialog) return;
   state.loading = true; render();
   try {
     const data = await request('/api/current/case');
@@ -295,6 +319,13 @@ async function load() {
         state.storageError = false;
       } catch (_) { state.storageError = true; }
     }
+    if (!state.fieldMachine) {
+      try {
+        state.fieldMachine = createFieldResponseMachine({caseId:data.case.case_id,origin:location.origin,storage:sessionStorage,
+          send: bytes => request('/api/current/field-responses', {method:'POST',body:bytes})});
+      } catch (_) { state.storageError = true; }
+    }
+    state.storageError = !(state.machine && state.fieldMachine);
   } catch (_) { state.error = 'The saved case could not be loaded. Refresh shortly; decisions remain paused until it is available.'; }
   finally { state.loading = false; render(); }
 }
