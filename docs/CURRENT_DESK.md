@@ -37,12 +37,24 @@ Watershed recovery, source-water review, field work and monitoring coverage have
 
 The first browser rehearsal uses genuinely fetched USGS observations and explicitly simulated operator work, with saved scripted Strands assessments. It exercised real database writes, reload recovery, an intentionally lost confirmation, a later human revision and rejection of an outdated form. The historical provider/AgentCore execution is documented in [the verified run](VERIFIED_RUN.md).
 
+## Field results carry the next decision forward
+
+The field-enabled service follows an agent's proposed inspection through a human-approved plan, a reported result, supporting evidence and an authorized verification. It also preserves corrections: a later partial result remains visible beside the original verification receipt. A past agent assessment continues to show the exact result and evidence it used at the time.
+
+The service exposes seven typed operations: propose, decide, modify, report, correct, attach evidence and verify. Applications bind an initialized `FieldStore` and a trusted `FieldPrincipal` to `CurrentDesk`; the server supplies the case and operator authority. The field routes are `GET /api/current/field-work/{plan_id}` and `POST /api/current/field-responses`. These are service capabilities; the browser controls above cover source-review work.
+
+An installed-package HTTP rehearsal exercised a saved USGS case with simulated field work: revise and approve an agent proposal in one human action, report completion, attach an inspection record, then lose the confirmation after verification saved. A later correction changed the result to partial. Retrying the original request returned its original verified receipt alongside that newer result. A separate process recovered the same state without changing any database table or byte; all three earlier assessments retained their original evidence. This rehearsal used local HTTP handlers and made no model or cloud calls.
+
+Field response payloads omit private notes. A malformed command is rejected before a write; a changed request with a reused identity conflicts. A saved result, its attached evidence and its verification remain distinct, so correcting a report requires verification of the new revision.
+
 ## Inspect the engineering
 
 - [Read-only case projection and response reconciliation](../watershed_memory/current/desk.py)
 - [Bounded assessment projection](../watershed_memory/current/desk_records.py) and [HTTP routes](../watershed_memory/current/http.py)
 - [Browser response state machine](../watershed_memory/static/current-state.mjs) and [operator interface](../watershed_memory/static/current.js)
 - [Desk, privacy and revision checks](../tests/test_current_desk.py), [HTTP boundary checks](../tests/test_current_api.py) and [launch checks](../tests/test_current_desk_cli.py)
+- [Current field views](../watershed_memory/current/field_desk_records.py), [historical assessment restoration](../watershed_memory/current/field_desk_history.py) and [typed field requests](../watershed_memory/current/field_http_types.py)
+- [Field service and retry checks](../tests/test_current_field_desk_responses.py) and [field HTTP checks](../tests/test_current_field_api.py)
 
 ```sh
 uv run pytest tests/test_current_desk.py tests/test_current_api.py tests/test_current_desk_cli.py -q

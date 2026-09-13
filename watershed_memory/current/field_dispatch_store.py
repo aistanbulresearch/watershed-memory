@@ -120,6 +120,36 @@ def _settings_v3(db, case_id):
     return state, policy, profile, previous
 
 
+def _read_admission(db, fields, attempt, state, policy, profile, is_v3):
+    """Validate saved dispatch admission inside the caller's read transaction."""
+    if not db.in_transaction:
+        raise ValueError("saved admission requires an explicit transaction")
+    saved = db.execute(
+        "SELECT * FROM dispatch_attempts WHERE case_id=? AND attempt_id=?",
+        (attempt["case_id"], attempt["attempt_id"]),
+    ).fetchone()
+    if saved is None or attempt["profile_json"] != _json(profile):
+        raise WorkflowConflict("attempt is not bound to this dispatch profile")
+    context, attention, move = restore_admission(
+        db, saved["replay_json"], saved["attention_json"], policy
+    )
+    data = json.loads(saved["replay_json"])
+    if (
+        not attention.eligible
+        or move != bool(saved["move_numeric"])
+        or context.case_id != attempt["case_id"]
+        or context.current.event_id != attempt["event_id"]
+        or data["source_delivery"] != bool(attempt["source_delivery"])
+        or (not is_v3 and rows.digest(_json(context)) != attempt["context_digest64"])
+    ):
+        raise WorkflowConflict("dispatch admission differs from its delivery")
+    if is_v3:
+        full = field_delivery_records.restore_reserved(db, fields, attempt)
+        if full.base != context:
+            raise WorkflowConflict("field and source admission contexts differ")
+    return context, attention, move, data, saved
+
+
 class FieldDispatchStore:
     def __init__(self, dispatch: DispatchStore, delivery: FieldDeliveryStore):
         if (
@@ -244,30 +274,7 @@ class FieldDispatchStore:
             )
 
     def _admission(self, db, attempt, state, policy, profile, is_v3):
-        saved = db.execute(
-            "SELECT * FROM dispatch_attempts WHERE case_id=? AND attempt_id=?",
-            (attempt["case_id"], attempt["attempt_id"]),
-        ).fetchone()
-        if saved is None or attempt["profile_json"] != _json(profile):
-            raise WorkflowConflict("attempt is not bound to this dispatch profile")
-        context, attention, move = restore_admission(
-            db, saved["replay_json"], saved["attention_json"], policy
-        )
-        data = json.loads(saved["replay_json"])
-        if (
-            not attention.eligible
-            or move != bool(saved["move_numeric"])
-            or context.case_id != attempt["case_id"]
-            or context.current.event_id != attempt["event_id"]
-            or data["source_delivery"] != bool(attempt["source_delivery"])
-            or (not is_v3 and rows.digest(_json(context)) != attempt["context_digest64"])
-        ):
-            raise WorkflowConflict("dispatch admission differs from its delivery")
-        if is_v3:
-            full = field_delivery_records.restore_reserved(db, self.fields, attempt)
-            if full.base != context:
-                raise WorkflowConflict("field and source admission contexts differ")
-        return context, attention, move, data, saved
+        return _read_admission(db, self.fields, attempt, state, policy, profile, is_v3)
 
     def prepare(self, case_id, *, now):
         now = utc(now)
