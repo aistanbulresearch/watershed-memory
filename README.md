@@ -45,6 +45,8 @@ uv run python -m watershed_memory.current.demo_seed --output .local/judge-demo
 
 Run the printed `desk_command`, then open **http://127.0.0.1:8771/current**. Inspect the reported work, its attached evidence and verification; correct the result and see its history stay intact. This offline demonstration needs no AWS credentials. [Field desk guide](docs/CURRENT_DESK.md).
 
+**Verified report. Unfinished work. A new plan.** A real current-v3 Strands turn worked from a saved case backed by 52 USGS observations and a simulated human field report marked **PARTIAL · VERIFIED**, then proposed a follow-up inspection for human approval. The same bounded tool journey committed directly through Amazon Bedrock and through AgentCore Runtime. **[Inspect the current verified run](docs/CURRENT_VERIFIED_RUN.md).**
+
 ### The agent behind the case
 
 The historical Strands integration exposes three bounded tools: read saved case context, retrieve a released observation window, and propose a review against an explicitly selected unfinished task. The service validates the work and its evidence before committing the turn. A model cannot write an operator response or declare the watershed recovered.
@@ -57,13 +59,13 @@ The historical Strands integration exposes three bounded tools: read saved case 
 
 The current-observation collector checks official USGS rain, flow and turbidity on a saved schedule. It catches late publications within a configured lookback, preserves corrections and queues evidence for case assessment. Restarting keeps the same observations and pending work. **[Run the continuous watch](docs/CONTINUOUS_WATCH.md).**
 
-This current collector performs acquisition without model calls. The browser and cloud walkthrough above demonstrate the separate verified historical agent journey.
+This current collector performs acquisition without model calls. The recorded walkthrough above remains the historical agent journey; the [current verified run](docs/CURRENT_VERIFIED_RUN.md) separately records the field-aware Bedrock and AgentCore executions.
 
 **Bring back the decision, not every reading.** The current dispatcher checks new evidence against the last completed assessment, keeps quiet updates in the case and brings back the operator's scheduled check. The agent receives the specific earlier evidence behind an accumulated change. Human-plan changes, source corrections and interrupted decisions retain their history. [Explore selective dispatch](docs/CURRENT_DISPATCH.md).
 
-**The next decision, with the team's plan still in view.** The local current field desk combines collected readings, saved work and the next check. Operators can change or defer a plan; lost confirmations recover without duplicate work, and an outdated form cannot overwrite a newer decision. [Open the current field desk](docs/CURRENT_DESK.md).
+**The next decision, with the team's plan still in view.** The current field desk combines collected readings, saved work and the next check. Operators can change or defer a plan; lost confirmations recover without duplicate work, and an outdated form cannot overwrite a newer decision. The interactive desk runs locally, while the same current-v3 agent path has been verified through AgentCore Runtime. [Open the current field desk](docs/CURRENT_DESK.md).
 
-**Follow the field work through.** Approve an inspection, report whether it was completed, attach its evidence and record verification of that exact result and evidence set. A later correction preserves the earlier record. The current agent tools inspect those field results alongside source evidence and stage follow-up proposals for human approval. This current tool journey is verified in installed SDK tests with controlled model responses. [Explore the field workflow](docs/FIELD_WORK.md) · [Inspect the current agent and its SDK execution](docs/CURRENT_RUNTIME.md).
+**Follow the field work through.** Approve an inspection, report whether it was completed, attach its evidence and record verification of that exact result and evidence set. A later correction preserves the earlier record. The current agent tools inspect those field results alongside source evidence and stage follow-up proposals for human approval. Controlled SDK tests cover all supported result branches; separate real-model Bedrock and AgentCore executions verified the partial-result follow-up. [Explore the field workflow](docs/FIELD_WORK.md) · [Inspect the current agent and its Runtime execution](docs/CURRENT_RUNTIME.md).
 
 ### Engineering worth opening
 
@@ -78,7 +80,7 @@ This current collector performs acquisition without model calls. The browser and
 - **An operator experience:** accessible actions, saved responses, contextual next steps, and evidence/trace panels on demand.
 - **Field results in the next context:** approved sites, revision-linked reports, scoped verification and human-owned follow-through, with immutable context captured before inference.
 
-[Architecture](docs/ARCHITECTURE.md) · [Current field-aware Runtime](docs/CURRENT_RUNTIME.md) · [Implementation and checks](docs/ENGINEERING.md) · [Interactive hosting](docs/HOSTING.md) · [Source attribution](THIRD_PARTY_NOTICES.md)
+[Architecture](docs/ARCHITECTURE.md) · [Current verified run](docs/CURRENT_VERIFIED_RUN.md) · [Current field-aware Runtime](docs/CURRENT_RUNTIME.md) · [Implementation and checks](docs/ENGINEERING.md) · [Interactive hosting](docs/HOSTING.md) · [Source attribution](THIRD_PARTY_NOTICES.md)
 
 ### Check it
 

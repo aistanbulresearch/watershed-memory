@@ -129,6 +129,24 @@ path; choosing it does not repoint the historical Runtime.
 
 ## Evidence and checks
 
+### Verified current execution
+
+On September 14, 2026, the field-aware current-v3 workflow completed against
+the real `us.amazon.nova-2-lite-v1:0` provider in two forms: one direct
+Bedrock Strands execution and one AgentCore Runtime execution. Both turns read
+the same saved case, inspected its source and field records, continued the
+existing review and committed an unapproved follow-up proposal for a verified
+partial field result. The AgentCore response was validated against Runtime
+version `1` and endpoint qualifier `current_v3`; its session stop was accepted.
+
+Both executions passed all nine independent result checks, including attempt
+count, provider allowance, immutable readings, saved-receipt replay and the
+human approval boundary. The proposal remained `PROPOSED`; no approval or
+field visit is claimed. See the [current verified run](CURRENT_VERIFIED_RUN.md)
+and its [public evidence record](evidence/current-agentcore-run.json).
+
+### Contract checks
+
 Run the focused local contract checks with an environment that has the locked
 AWS and OpenTelemetry dependencies:
 
@@ -138,9 +156,10 @@ uv run --locked pytest tests/test_current_deployment.py tests/test_current_provi
 
 The local AgentCore SDK and Strands exercise uses a handwritten model and has
 passed in a separate HTTP process for successful execution, typed failure,
-incomplete result and stale correction branches. The current ARM64 ZIP has
-been built and its inventory and bytes inspected independently. A successful
-current real-model turn and deployed Runtime check remain separate acceptance gates.
+incomplete result and stale correction branches. Those controlled tests remain
+distinct from the real-model executions above. The accepted ARM64 ZIP contains
+125 application files and 5,540 dependency files; the installed package suite
+passed 216 tests before the verified run.
 
 The historical real AgentCore execution is documented in the
 [verified run](VERIFIED_RUN.md). It records two Runtime sessions continuing
