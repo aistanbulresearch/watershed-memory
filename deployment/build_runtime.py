@@ -33,12 +33,72 @@ def validate_native(name: str, content: bytes) -> None:
         raise ValueError(f"Native library is not ELF: {name}")
 
 
-def build_package(root: Path, dependencies: Path, destination: Path) -> dict:
+_PUBLIC_EXTENSIONS = {".py", ".json", ".md", ".html", ".css", ".js", ".mjs"}
+_FIXED_PUBLIC_FILES = {
+    "LICENSE", "THIRD_PARTY_NOTICES.md",
+    "third_party/aws-otel-python-instrumentation/LICENSE",
+    "third_party/aws-otel-python-instrumentation/NOTICE",
+    "third_party/aws-otel-python-instrumentation/THIRD-PARTY-LICENSES",
+    "runtime/entrypoint.py", "runtime/launch.py",
+    "runtime/current_entrypoint.py", "runtime/current_launch.py",
+}
+
+
+def _link_or_junction(path: Path) -> bool:
+    """Detect both symlinks and Windows junctions without following them."""
+    if path.is_symlink():
+        return True
+    is_junction = getattr(path, "is_junction", None)
+    return bool(is_junction and is_junction())
+
+
+def _has_link_parent(path: Path, boundary: Path) -> bool:
+    current = path
+    while True:
+        if _link_or_junction(current):
+            return True
+        if current == boundary:
+            return False
+        if current.parent == current:
+            return True
+        current = current.parent
+
+
+def _validate_source_name(name: object) -> str:
+    if type(name) is not str or not name or not name.isascii():
+        raise ValueError("Selected source names must be nonempty ASCII strings.")
+    if "\\" in name or ":" in name or "\x00" in name or name.startswith("/"):
+        raise ValueError(f"Non-canonical source path: {name!r}")
+    parts = name.split("/")
+    if any(part in ("", ".", "..") or part.startswith(".") for part in parts):
+        raise ValueError(f"Non-canonical source path: {name!r}")
+    if name.startswith("watershed_memory/"):
+        if Path(name).suffix not in _PUBLIC_EXTENSIONS:
+            raise ValueError(f"Unrecognized public source type: {name}")
+    elif name not in _FIXED_PUBLIC_FILES:
+        raise ValueError(f"Unrecognized public source path: {name}")
+    if any(part.casefold() in {"agents.md", "project_state.md"} for part in parts):
+        raise ValueError(f"Private file in artifact: {name}")
+    return name
+
+
+def build_package(root: Path, dependencies: Path, destination: Path, *,
+                  source_files: tuple[str, ...] = SOURCE_FILES) -> dict:
     root, dependencies, destination = root.resolve(), dependencies.resolve(), destination.resolve()
-    if destination.exists():
+    if type(source_files) is not tuple or not source_files:
+        raise ValueError("source_files must be a nonempty tuple.")
+    selected = [_validate_source_name(name) for name in source_files]
+    lowered = [name.casefold() for name in selected]
+    if len(set(lowered)) != len(lowered):
+        raise ValueError("Selected source paths contain duplicate aliases.")
+    manifest_path = destination.with_suffix(".manifest.json")
+    if destination.exists() or manifest_path.exists():
         raise ValueError("Use a fresh artifact path; preserve previously inspected builds.")
     entries: dict[str, Path] = {}
+    entry_aliases: set[str] = set()
     for path in sorted(dependencies.rglob("*")):
+        if _link_or_junction(path):
+            raise ValueError("Dependency cache contains link or junction indirection.")
         if not path.is_file():
             continue
         relative = path.relative_to(dependencies)
@@ -46,22 +106,37 @@ def build_package(root: Path, dependencies: Path, destination: Path) -> dict:
             continue
         if path.suffix == ".pyc":
             continue
-        if path.is_symlink() or not path.resolve().is_relative_to(dependencies):
+        name = relative.as_posix()
+        if _has_link_parent(path, dependencies) or not path.resolve().is_relative_to(dependencies):
             raise ValueError("Dependency link leaves the inspected artifact directory.")
-        entries[relative.as_posix()] = path
-    for name in SOURCE_FILES:
+        if not name or any(part in ("", ".", "..") for part in name.split("/")):
+            raise ValueError(f"Non-canonical dependency path: {name}")
+        alias = name.casefold()
+        if (alias == "watershed_memory.py" or alias.startswith("watershed_memory/")
+                or alias == "runtime.py" or alias.startswith("runtime/")):
+            raise ValueError(f"Dependency shadows application namespace: {name}")
+        if alias in entry_aliases:
+            raise ValueError(f"Duplicate dependency archive path: {name}")
+        entry_aliases.add(alias)
+        entries[name] = path
+    for name in selected:
         path = root / name
-        if not path.is_file() or path.is_symlink():
+        if (not path.is_file() or _has_link_parent(path, root)
+                or not path.resolve().is_relative_to(root)):
             raise ValueError(f"Missing regular public source file: {name}")
-        if name in entries:
+        alias = name.casefold()
+        if alias in entry_aliases:
             raise ValueError(f"Dependency shadows application source: {name}")
+        entry_aliases.add(alias)
         entries[name] = path
     if not any(name.startswith("aws_opentelemetry_distro-") for name in entries):
         raise ValueError("The artifact requires the locked AWS OpenTelemetry distribution.")
     manifest = []
     total = 0
     for name, path in sorted(entries.items()):
-        if name.startswith((".local/", "temp/", "Daily/")) or name in ("AGENTS.md", "PROJECT_STATE.md"):
+        if (name.startswith((".local/", "temp/", "Daily/"))
+                or any(part.casefold() in {"agents.md", "project_state.md"}
+                       for part in name.split("/"))):
             raise ValueError(f"Private file in artifact: {name}")
         content = path.read_bytes()
         validate_native(name, content)
@@ -88,7 +163,7 @@ def build_package(root: Path, dependencies: Path, destination: Path) -> dict:
               "artifact_sha256": hashlib.sha256(destination.read_bytes()).hexdigest(),
               "compressed_bytes": destination.stat().st_size, "uncompressed_bytes": total,
               "entries": manifest}
-    destination.with_suffix(".manifest.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+    manifest_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
     return result
 
 

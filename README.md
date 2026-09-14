@@ -67,7 +67,7 @@ This current collector performs acquisition without model calls. The browser and
 - **Selective attention:** replayable quiet decisions, accumulated-change comparisons and exact operator-plan check times, connected to a bounded Strands runner.
 - **An operator experience:** accessible actions, saved responses, contextual next steps, and evidence/trace panels on demand.
 
-[Architecture](docs/ARCHITECTURE.md) · [Implementation and checks](docs/ENGINEERING.md) · [Interactive hosting](docs/HOSTING.md) · [Source attribution](THIRD_PARTY_NOTICES.md)
+[Architecture](docs/ARCHITECTURE.md) · [Current field-aware Runtime](docs/CURRENT_RUNTIME.md) · [Implementation and checks](docs/ENGINEERING.md) · [Interactive hosting](docs/HOSTING.md) · [Source attribution](THIRD_PARTY_NOTICES.md)
 
 ### Check it
 
