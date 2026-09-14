@@ -73,6 +73,17 @@ Implementation entry points: [context wire format](../watershed_memory/current/c
 
 ## Build the current artifact
 
+Build from the checked-in current source inventory and the prepared Linux ARM64
+dependency directory:
+
+```bash
+uv run python -m deployment.build_current_runtime --dependencies PATH_TO_ARM64_DEPS --output build/current-runtime.zip
+```
+
+The fixed [current inventory](../deployment/current_sources.json) selects the
+current launcher and the complete application package. The output path must be
+new; the builder writes an adjacent manifest with the hash and size of every file.
+
 The current package is an explicit public source inventory. `build_package`
 does not recursively collect application files: the reviewed source tuple is
 checked for canonical ASCII POSIX names, duplicate aliases, private names,
