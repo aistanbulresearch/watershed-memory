@@ -74,12 +74,16 @@ evidence and verification values returned by inspection. Bounded history never p
 work is absent. A corrected report does not inherit an earlier report's verification.
 
 6. The field dispositions are NO_NEW_FIELD_PLAN, AWAIT_VERIFICATION and PROPOSE_FIELD_PLAN.
-A COMPLETE result with verification_level VERIFIED supports NO_NEW_FIELD_PLAN. A COMPLETE
-result with REPORTED or EVIDENCE_ATTACHED supports AWAIT_VERIFICATION. The only verification
-levels are REPORTED, EVIDENCE_ATTACHED and VERIFIED. Existing current or stranded active work
-blocks a duplicate proposal. A follow-up proposal may use the newest selected PARTIAL or
-NOT_DONE result for its exact active review and must cite that inspected result as its basis.
-Do not replace verified complete work merely because another event arrived.
+Report outcome and verification level are orthogonal. VERIFIED confirms the human-stated scope
+of a report; it never changes a PARTIAL or NOT_DONE outcome into COMPLETE. A COMPLETE result
+with verification_level VERIFIED supports NO_NEW_FIELD_PLAN. A COMPLETE result with REPORTED
+or EVIDENCE_ATTACHED supports AWAIT_VERIFICATION. Do not choose NO_NEW_FIELD_PLAN for unfinished
+work merely because its verification level is VERIFIED; that choice requires a concrete
+evidence or blocker reason, such as no eligible approved site. The only verification levels are
+REPORTED, EVIDENCE_ATTACHED and VERIFIED. Existing current or stranded active work blocks a
+duplicate proposal. A follow-up proposal may use the newest selected PARTIAL or NOT_DONE result
+for its exact active review and must cite that inspected result as its basis. Do not replace
+verified complete work merely because another event arrived.
 
 7. Before PROPOSE_FIELD_PLAN, call list_approved_field_locations with the exact activity to
 be proposed, then use an exact returned location_id and revision that authorizes it. The only

@@ -161,6 +161,11 @@ def test_actual_sdk_one_tool_per_response_reaches_exact_field_decision(
 
     phases = [[item["name"] for item in specs] for specs in model.tool_specs]
     assert phases[0] == ["get_case_context"]
+    location_phases = [phase for phase in phases if "list_approved_field_locations" in phase]
+    if expected == "PROPOSE_FIELD_PLAN":
+        assert location_phases == [["list_approved_field_locations"]]
+    else:
+        assert location_phases == []
     first_stage_index = next(
         i for i, phase in enumerate(phases) if "stage_field_decision" in phase
     )
@@ -172,6 +177,11 @@ def test_actual_sdk_one_tool_per_response_reaches_exact_field_decision(
     )
     jsonschema.validate(final_payload, final_spec["inputSchema"]["json"])
     assert _enum(final_spec, "basis_report_revision") == [basis.result.report.revision]
+    if expected == "PROPOSE_FIELD_PLAN":
+        assert _enum(final_spec, "disposition") == [
+            "NO_NEW_FIELD_PLAN",
+            "PROPOSE_FIELD_PLAN",
+        ]
 
 
 def test_filtered_view_does_not_mutate_registry_and_hidden_stage_still_fails_atomically(field):
@@ -379,6 +389,77 @@ def test_complete_unverified_result_at_second_index_remains_an_exact_await_basis
     jsonschema.validate(payload, stage["inputSchema"]["json"])
     evidence.stage_field_decision(**payload)
     assert evidence.finish().field.basis_plan_id == second.plan.plan_id
+
+
+def test_mixed_unfinished_and_unverified_complete_requires_location_before_all_choices(field):
+    context = _context(
+        field,
+        result_specs=(
+            ("unfinished-parent", "coverage", "PARTIAL"),
+            ("complete-parent", "observation", "COMPLETE"),
+        ),
+    )
+    unfinished, complete = context.field_work.latest_results
+    attached_result = replace(
+        complete.result,
+        verification=None,
+        verification_level="EVIDENCE_ATTACHED",
+    )
+    complete = replace(
+        complete,
+        result=attached_result,
+        field_dimension=field_dimension(complete.plan, attached_result),
+    )
+    field_work = replace(context.field_work, latest_results=(unfinished, complete))
+    context = CurrentContextV3(
+        context.base, field_work, digest(encode(asdict(field_work)))
+    )
+    evidence = CurrentToolsV3(context)
+    _stage_source(evidence)
+    evidence.get_field_context()
+    protocol = FieldModelProtocol(BatchModel([]), evidence)
+    specs = _registered(evidence)
+    for plan_id in protocol._required_plan_ids():
+        evidence.inspect_field_work(plan_id)
+    before_optional = protocol.tool_specs(specs)
+    assert {item["name"] for item in before_optional} == {
+        "inspect_field_work",
+        "list_approved_field_locations",
+    }
+    evidence.inspect_field_work(complete.plan.plan_id)
+    after_optional = protocol.tool_specs(specs)
+    assert [item["name"] for item in after_optional] == [
+        "list_approved_field_locations"
+    ]
+    evidence.list_approved_field_locations("VISUAL_INSPECTION")
+    stage = next(
+        item for item in protocol.tool_specs(specs) if item["name"] == "stage_field_decision"
+    )
+    assert _enum(stage, "disposition") == [
+        "NO_NEW_FIELD_PLAN",
+        "AWAIT_VERIFICATION",
+        "PROPOSE_FIELD_PLAN",
+    ]
+    result = complete.result
+    evidence.stage_field_decision(
+        disposition="AWAIT_VERIFICATION",
+        basis_plan_id=complete.plan.plan_id,
+        basis_report_id=result.report.report_id,
+        basis_report_revision=result.report.revision,
+        basis_verification_level=result.verification_level,
+        reason="Await human verification of the exact complete attached report.",
+        task_id=None,
+        review_revision=None,
+        location_id=None,
+        location_revision=None,
+        activity=None,
+        purpose=None,
+        assignee_role=None,
+        window_start=None,
+        window_end=None,
+        required_evidence=None,
+    )
+    assert evidence.finish().field.disposition == "AWAIT_VERIFICATION"
 
 
 @pytest.mark.parametrize(

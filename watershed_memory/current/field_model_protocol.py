@@ -305,6 +305,7 @@ class FieldModelProtocol(Model):
         ):
             allowed.add("list_approved_field_locations")
             restrictions["list_approved_field_locations"] = {"activity": activities}
+            allowed.remove("stage_field_decision")
         return allowed, restrictions
 
     def _phase(self) -> tuple[set[str], dict[str, dict[str, tuple[Any, ...]]]]:

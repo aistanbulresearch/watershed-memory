@@ -57,6 +57,9 @@ def test_prompt_names_complete_ordered_protocol_and_closed_values():
     assert "all sixteen stage_field_decision arguments" in SYSTEM_PROMPT
     assert "executor runs a batch sequentially" in SYSTEM_PROMPT
     assert "explicit JSON nulls" in SYSTEM_PROMPT
+    assert "Report outcome and verification level are orthogonal" in SYSTEM_PROMPT
+    assert "never changes a PARTIAL or NOT_DONE outcome into COMPLETE" in SYSTEM_PROMPT
+    assert "merely because its verification level is VERIFIED" in SYSTEM_PROMPT
 
 
 def test_actual_sdk_follows_partial_result_to_bounded_field_followup(field):
