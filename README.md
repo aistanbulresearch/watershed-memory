@@ -12,7 +12,9 @@ Every new observation arrives alongside earlier measurements, unfinished reviews
 
 Built by **AIstanbul Research Group** for the **Agents for Humans Hackathon**, Professional Agents track.
 
-**[Watch the verified cloud run](https://aistanbulresearch.github.io/watershed-memory/)** — four recorded moments, one enduring case, with the actual Strands tool receipts available to inspect.
+**[Open the operator workspace](https://watershed.aistanbulresearch.com/current)** — try your own case, approve a review and inspect a verified field report. Your actions stay saved through reloads. The demo uses saved USGS readings and simulated field work; no sign-in is required.
+
+**[Watch the verified cloud run](https://aistanbulresearch.github.io/watershed-memory/)** — four recorded moments, one enduring case, with the actual Strands tool receipts available to inspect. **[Inspect the current field-aware AgentCore run](docs/CURRENT_VERIFIED_RUN.md).**
 
 [![The recorded September cloud run keeps review R-01 acknowledged with three evidence links and opens a separate R-02 evidence-gap review.](docs/assets/recorded-case.png)](https://aistanbulresearch.github.io/watershed-memory/#journey)
 
@@ -63,7 +65,7 @@ This current collector performs acquisition without model calls. The recorded wa
 
 **Bring back the decision, not every reading.** The current dispatcher checks new evidence against the last completed assessment, keeps quiet updates in the case and brings back the operator's scheduled check. The agent receives the specific earlier evidence behind an accumulated change. Human-plan changes, source corrections and interrupted decisions retain their history. [Explore selective dispatch](docs/CURRENT_DISPATCH.md).
 
-**The next decision, with the team's plan still in view.** The current field desk combines collected readings, saved work and the next check. Operators can change or defer a plan; lost confirmations recover without duplicate work, and an outdated form cannot overwrite a newer decision. The interactive desk runs locally, while the same current-v3 agent path has been verified through AgentCore Runtime. [Open the current field desk](docs/CURRENT_DESK.md).
+**The next decision, with the team's plan still in view.** The current field desk combines collected readings, saved work and the next check. Operators can change or defer a plan; lost confirmations recover without duplicate work, and an outdated form cannot overwrite a newer decision. Try the [public interactive desk](https://watershed.aistanbulresearch.com/current); the current-v3 agent path is separately verified through AgentCore Runtime. [Field desk guide](docs/CURRENT_DESK.md).
 
 **Follow the field work through.** Approve an inspection, report whether it was completed, attach its evidence and record verification of that exact result and evidence set. A later correction preserves the earlier record. The current agent tools inspect those field results alongside source evidence and stage follow-up proposals for human approval. Controlled SDK tests cover all supported result branches; separate real-model Bedrock and AgentCore executions verified the partial-result follow-up. [Explore the field workflow](docs/FIELD_WORK.md) · [Inspect the current agent and its Runtime execution](docs/CURRENT_RUNTIME.md).
 
