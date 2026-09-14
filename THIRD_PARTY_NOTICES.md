@@ -14,6 +14,8 @@ The [associated publication](https://doi.org/10.1038/s41467-024-51306-9) supplie
 
 Official observations from [USGS Water Services](https://waterservices.usgs.gov/) include station **08380500**, discharge parameter **00060** and precipitation parameter **00045**. The acquisition manifest records exact request URLs, retrieval details and SHA-256 checksums. Historical approved values may be updated by the provider; retain the source manifest with each replay.
 
+The offline field desk includes [52 saved USGS observations](watershed_memory/data/current-demo-observations.json) collected on September 12, 2026, with original observation times, retrieval receipts and semantic hashes. The bundled fixture does not fetch new readings. Its field assignment, operator report and verification are demonstration actions, labelled separately from the source observations.
+
 ## Software
 
 The original data and persistence proof uses the Python standard library. The application installs its dependencies through `uv.lock`, including Strands Agents and the Bedrock AgentCore SDK (Apache-2.0). The optional AgentCore CodeZip bundles the locked runtime dependencies and retains their distributed license, notice and metadata files. Source analysis programs from the downloaded data archive are not executed or bundled.

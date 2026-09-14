@@ -37,6 +37,14 @@ Open **http://127.0.0.1:8765**. The small historical observation bundle is inclu
 
 The workspace identifies **historical replay · rules**. Operator responses are demonstration actions. The records are real SQLite writes; each browser replay has an independent case.
 
+**Try the field desk, too.** Create a disposable case with 52 saved USGS measurements and a demonstrated partial inspection:
+
+```bash
+uv run python -m watershed_memory.current.demo_seed --output .local/judge-demo
+```
+
+Run the printed `desk_command`, then open **http://127.0.0.1:8771/current**. Inspect the reported work, its attached evidence and verification; correct the result and see its history stay intact. This offline demonstration needs no AWS credentials. [Field desk guide](docs/CURRENT_DESK.md).
+
 ### The agent behind the case
 
 The historical Strands integration exposes three bounded tools: read saved case context, retrieve a released observation window, and propose a review against an explicitly selected unfinished task. The service validates the work and its evidence before committing the turn. A model cannot write an operator response or declare the watershed recovered.
