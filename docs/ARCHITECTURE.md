@@ -37,8 +37,9 @@ results, evidence and verification. Its browser recovery tests exercise lost
 confirmations and concurrent corrections. Separate installed-process tests run
 the actual Strands and AgentCore SDKs with a handwritten model across successful,
 failed, incomplete and stale outcomes. The current ARM64 Runtime package is
-built and independently inspected; current real-model/cloud execution is the
-next gate. The historical cloud execution below is already verified.
+built and independently inspected. A successful current real-model turn and
+deployed Runtime check remain separate acceptance gates. The historical cloud
+execution below is already verified.
 
 [Continuous collection](CONTINUOUS_WATCH.md) · [Selective dispatch](CURRENT_DISPATCH.md) ·
 [Field work](FIELD_WORK.md) · [Current Runtime](CURRENT_RUNTIME.md)

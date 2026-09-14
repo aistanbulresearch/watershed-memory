@@ -128,8 +128,8 @@ uv run --locked pytest tests/test_current_deployment.py tests/test_current_provi
 The local AgentCore SDK and Strands exercise uses a handwritten model and has
 passed in a separate HTTP process for successful execution, typed failure,
 incomplete result and stale correction branches. The current ARM64 ZIP has
-been built and its inventory and bytes inspected independently. Current
-real-model and deployed Runtime checks are the next execution gate.
+been built and its inventory and bytes inspected independently. A successful
+current real-model turn and deployed Runtime check remain separate acceptance gates.
 
 The historical real AgentCore execution is documented in the
 [verified run](VERIFIED_RUN.md). It records two Runtime sessions continuing

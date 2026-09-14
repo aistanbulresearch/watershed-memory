@@ -33,7 +33,7 @@ A local rehearsal copied the saved case containing genuinely fetched USGS observ
 
 A separate process recovered both the current partial result and the earlier verified report. Retrying the earlier verification returned its original receipt without changing the case. All pre-existing source, review, delivery and dispatch tables remained unchanged except the case's revision and update time. The rehearsal made no network or model calls.
 
-The field-ledger checkpoint passed **144 focused checks**, including real concurrent writers and rollback at transaction failure points. Its complete project suite passed **1,269 tests**; **1,070 tests** also passed against a fresh installed package. The subsequent context extension adds its own tests and restart proof. Field-aware Strands decisions and browser controls will have their own integration proofs.
+The field-ledger checkpoint passed **144 focused checks**, including real concurrent writers and rollback at transaction failure points. Its complete project suite passed **1,269 tests**; **1,070 tests** also passed against a fresh installed package. The subsequent context extension adds its own tests and restart proof. Subsequent field-aware Strands and browser integration checks exercise the actual SDKs with controlled model responses and local browser/HTTP flows.
 
 ## Inspect the engineering
 
