@@ -2,7 +2,7 @@
 
 Watershed Memory now keeps the field-work cycle together: the review that prompted an inspection, the approved place and plan, the operator's result, its evidence references, and the person's verification. A later correction changes the current result while preserving the earlier account.
 
-The field ledger and its [field-aware context](FIELD_CONTEXT.md) are implemented. Browser controls and field-aware Strands decisions are the next integration steps.
+The field ledger, [field-aware context](FIELD_CONTEXT.md) and [operator browser controls](CURRENT_DESK.md) are implemented. The current Strands tools inspect field results and propose follow-up work; their installed SDK execution with controlled model responses and current Runtime package are documented in [Current Runtime](CURRENT_RUNTIME.md). The real cloud walkthrough demonstrates the earlier historical agent profile.
 
 | Team action | What the ledger preserves |
 |---|---|

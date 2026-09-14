@@ -1,4 +1,47 @@
-# One case, successive observations
+# From a changing river to a continuing field plan
+
+Watershed Memory connects incoming station readings, unfinished reviews and
+the team's field results. The case ledger carries that history into the next
+agent decision and preserves the human actions that follow.
+
+## Current observations and field work
+
+```mermaid
+flowchart LR
+    USGS[Official USGS readings] --> Watch[Scheduled collector]
+    Watch --> Evidence[(Versioned observations)]
+    Evidence --> Attention[Change and scheduled-check assessment]
+    Ledger[(Case and field ledger)] --> Context[Immutable decision context]
+    Attention --> Reserve[Reserve one bounded attempt]
+    Reserve --> Context
+    Context --> Runtime[AgentCore current HTTP handler]
+    Runtime --> Agent[One Strands agent with tools]
+    Agent --> Validate[Validate proposal and evidence]
+    Validate --> Commit[Atomic case update and receipt]
+    Commit --> Ledger
+    Ledger --> Desk[Operator field desk]
+    Desk --> Human[Approve, report, attach, verify, correct]
+    Human --> Ledger
+```
+
+The collector runs without model calls. The dispatcher admits meaningful
+changes and scheduled checks to a bounded agent turn. Source and field tools
+read the reserved context; the agent stages work, and the application validates
+and commits it. Human corrections retain their own revisions and invalidate
+proposals based on superseded context.
+
+The working field desk supports approval, modification, deferral, cancellation,
+results, evidence and verification. Its browser recovery tests exercise lost
+confirmations and concurrent corrections. Separate installed-process tests run
+the actual Strands and AgentCore SDKs with a handwritten model across successful,
+failed, incomplete and stale outcomes. The current ARM64 Runtime package is
+built and independently inspected; current real-model/cloud execution is the
+next gate. The historical cloud execution below is already verified.
+
+[Continuous collection](CONTINUOUS_WATCH.md) · [Selective dispatch](CURRENT_DISPATCH.md) ·
+[Field work](FIELD_WORK.md) · [Current Runtime](CURRENT_RUNTIME.md)
+
+## Verified historical cloud journey
 
 The source-water case survives individual model calls, browser tabs and server restarts. An agent turn reads that case, selects evidence and proposes permitted work. The service checks the whole turn before saving it.
 

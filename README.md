@@ -8,7 +8,7 @@ In July 2022, Las Vegas, New Mexico declared a disaster after flooding, ash and 
 
 Every new observation arrives alongside earlier measurements, unfinished reviews and changing evidence coverage. The work has to stay connected from one storm to the next.
 
-**Watershed Memory keeps that work connected.** One watershed case carries observations and operator responses forward. A later event strengthens an existing review; missing station evidence gets its own review. The next storm arrives. The work stays connected.
+**Watershed Memory keeps that work connected.** One watershed case carries observations and operator responses forward. A later event strengthens an existing review; missing station evidence gets its own review. Teams can turn reviews into approved field plans, report the outcome and attach the evidence. The next storm arrives. The work stays connected.
 
 Built by **AIstanbul Research Group** for the **Agents for Humans Hackathon**, Professional Agents track.
 
@@ -39,7 +39,7 @@ The workspace identifies **historical replay · rules**. Operator responses are 
 
 ### The agent behind the case
 
-The Strands integration exposes three bounded tools: read saved case context, retrieve a released observation window, and propose a review against an explicitly selected unfinished task. The service validates the work and its evidence before committing the turn. A model cannot write an operator response or declare the watershed recovered.
+The historical Strands integration exposes three bounded tools: read saved case context, retrieve a released observation window, and propose a review against an explicitly selected unfinished task. The service validates the work and its evidence before committing the turn. A model cannot write an operator response or declare the watershed recovered.
 
 **Real Strands execution has passed all three feasibility cases:** unfinished work, acknowledged work with missing evidence, and new work after completion. The gate records tool choices, usage, duplicate handling and fresh-process persistence. [Run the Strands gate](docs/ENGINEERING.md#real-strands-gate).
 
@@ -55,6 +55,8 @@ This current collector performs acquisition without model calls. The browser and
 
 **The next decision, with the team's plan still in view.** The local current field desk combines collected readings, saved work and the next check. Operators can change or defer a plan; lost confirmations recover without duplicate work, and an outdated form cannot overwrite a newer decision. [Open the current field desk](docs/CURRENT_DESK.md).
 
+**Follow the field work through.** Approve an inspection, report whether it was completed, attach its evidence and record verification of that exact result and evidence set. A later correction preserves the earlier record. The current agent tools inspect those field results alongside source evidence and stage follow-up proposals for human approval. This current tool journey is verified in installed SDK tests with controlled model responses. [Explore the field workflow](docs/FIELD_WORK.md) · [Inspect the current agent and its SDK execution](docs/CURRENT_RUNTIME.md).
+
 ### Engineering worth opening
 
 - **One enduring case:** observations, reviews and operator responses stay connected across restarts.
@@ -66,6 +68,7 @@ This current collector performs acquisition without model calls. The browser and
 - **Continuous acquisition:** bounded source reads, revision-linked evidence, exclusive poll leases and an indexed durable event queue.
 - **Selective attention:** replayable quiet decisions, accumulated-change comparisons and exact operator-plan check times, connected to a bounded Strands runner.
 - **An operator experience:** accessible actions, saved responses, contextual next steps, and evidence/trace panels on demand.
+- **Field results in the next context:** approved sites, revision-linked reports, scoped verification and human-owned follow-through, with immutable context captured before inference.
 
 [Architecture](docs/ARCHITECTURE.md) · [Current field-aware Runtime](docs/CURRENT_RUNTIME.md) · [Implementation and checks](docs/ENGINEERING.md) · [Interactive hosting](docs/HOSTING.md) · [Source attribution](THIRD_PARTY_NOTICES.md)
 
