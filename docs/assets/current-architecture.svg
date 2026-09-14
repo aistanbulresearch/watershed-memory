@@ -34,7 +34,7 @@
       <text x="95" y="511">Evidence · reviews · field work</text>
       <text x="95" y="545">Revisions + saved receipts</text>
       <text x="485" y="516">Fixed context → evidence and field tools → proposal</text>
-      <text x="485" y="554">Amazon Nova Pro · bounded calls · explicit session stop</text>
+      <text x="485" y="554">Amazon Nova 2 Lite · bounded calls · session stop</text>
       <text x="1262" y="511">Evidence + case revision</text>
       <text x="1262" y="545">One atomic transaction</text>
       <text x="95" y="783">Approve · report · attach · verify · correct</text>
@@ -51,6 +51,7 @@
     <text x="800" y="636" font-size="20" fill="#206c62">Validated work and human responses return to the same case</text>
     <text x="810" y="744" font-size="24" font-weight="700">A repeated request returns its saved result.</text>
     <text x="810" y="783" font-size="22" fill="#486363">A newer human correction keeps its authority.</text>
-    <text x="70" y="870" font-size="17" fill="#637472">Current field-aware boundary: installed SDK tests with a handwritten model. Historical cloud profile: real AgentCore runs.</text>
+    <text x="70" y="858" font-size="17" fill="#637472">Current agent: real Bedrock + AgentCore executions verified 14 Sep 2026. Case memory: external SQLite.</text>
+    <text x="70" y="882" font-size="17" fill="#637472">Public HTTPS desk: isolated cases with saved USGS readings and simulated field work; no browser-triggered model calls.</text>
   </g>
 </svg>

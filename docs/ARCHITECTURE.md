@@ -37,9 +37,12 @@ results, evidence and verification. Its browser recovery tests exercise lost
 confirmations and concurrent corrections. Separate installed-process tests run
 the actual Strands and AgentCore SDKs with a handwritten model across successful,
 failed, incomplete and stale outcomes. The current ARM64 Runtime package is
-built and independently inspected. A successful current real-model turn and
-deployed Runtime check remain separate acceptance gates. The historical cloud
-execution below is already verified.
+built and independently inspected. The current field-aware turn has also passed
+real-model execution directly through Bedrock and through AgentCore Runtime:
+a verified partial report produced an unapproved follow-up proposal. Inspect
+the [current verified run](CURRENT_VERIFIED_RUN.md). The public HTTPS desk uses
+isolated cases with saved USGS readings and simulated field work; that public
+route makes no model calls. The historical cloud execution below is separately verified.
 
 [Continuous collection](CONTINUOUS_WATCH.md) · [Selective dispatch](CURRENT_DISPATCH.md) ·
 [Field work](FIELD_WORK.md) · [Current Runtime](CURRENT_RUNTIME.md)
