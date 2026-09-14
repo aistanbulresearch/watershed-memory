@@ -4,6 +4,8 @@ Watershed Memory connects incoming station readings, unfinished reviews and
 the team's field results. The case ledger carries that history into the next
 agent decision and preserves the human actions that follow.
 
+![Official observations feed a continuing case ledger, one bounded Strands agent on AgentCore, and a human-owned field workflow.](assets/current-architecture.svg)
+
 ## Current observations and field work
 
 ```mermaid
