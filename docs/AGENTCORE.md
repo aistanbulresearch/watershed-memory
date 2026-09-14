@@ -1,5 +1,8 @@
 # A new Runtime session. The same watershed case.
 
+For field-result-aware decisions, see the [current Runtime path](CURRENT_RUNTIME.md).
+It connects the source and human field ledger to the separately packaged current agent.
+
 The cloud planner receives the work that still matters, uses Strands tools to select the next review, and returns a verifiable proposal. The case service saves that work outside the Runtime session. The following storm can arrive in a different session and continue the same review.
 
 ## The division of work

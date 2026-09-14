@@ -1,5 +1,6 @@
 """Render the bounded Runtime proof resources; importing this module makes no AWS calls."""
 
+import copy
 import re
 import uuid
 from dataclasses import dataclass
@@ -92,6 +93,25 @@ def build_plan(spec: RuntimeSpec) -> dict:
         # The AWS Create API omits this field; inspect it and explicitly update if needed.
         "runtime_metadata": {"requireMMDSV2": True},
     }
+
+
+def build_current_plan(spec: RuntimeSpec) -> dict:
+    """Render the fixed current launcher plan without changing historical output."""
+    plan = copy.deepcopy(build_plan(spec))
+    request = plan["create_runtime"]
+    request["description"] = (
+        "Watershed Memory: current runtime with a bounded Strands review "
+        "and an external case ledger."
+    )
+    request["agentRuntimeArtifact"]["codeConfiguration"]["entryPoint"] = [
+        "runtime/current_launch.py"
+    ]
+    request["clientToken"] = str(uuid.uuid5(
+        uuid.NAMESPACE_URL,
+        f"watershed-memory:current-v3:{spec.account}:{spec.region}:"
+        f"{spec.name}:{spec.artifact_sha256}",
+    ))
+    return plan
 
 
 def transaction_search_policy(account: str, region: str) -> dict:

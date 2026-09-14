@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Watershed Memory architecture</title>
+  <desc id="desc">Official readings enter a versioned ledger. Selective attention reserves a decision. A Strands agent on the AgentCore boundary reads the fixed context and proposes work. Validation saves the result atomically. Human field actions return to the same ledger.</desc>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="#206c62"/></marker></defs>
+  <rect width="1600" height="900" fill="#f5f1e8"/>
+  <g font-family="Arial, sans-serif" fill="#153a3b">
+    <text x="70" y="66" font-size="20" letter-spacing="3" fill="#a45629">WATERSHED MEMORY · ARCHITECTURE</text>
+    <text x="70" y="125" font-size="46" font-weight="700">One case outlives every agent session.</text>
+    <g fill="#fffdf8" stroke="#d7d1c3" stroke-width="2">
+      <rect x="70" y="200" width="330" height="130" rx="12"/>
+      <rect x="460" y="200" width="330" height="130" rx="12"/>
+      <rect x="850" y="200" width="330" height="130" rx="12"/>
+      <rect x="70" y="430" width="330" height="160" rx="12"/>
+      <rect x="460" y="430" width="720" height="160" rx="12" fill="#e3eee7" stroke="#206c62"/>
+      <rect x="1240" y="430" width="290" height="160" rx="12"/>
+      <rect x="70" y="700" width="600" height="120" rx="12"/>
+    </g>
+    <g font-size="26" font-weight="700">
+      <text x="95" y="240">Official USGS readings</text>
+      <text x="485" y="240">Scheduled collection</text>
+      <text x="875" y="240">Selective attention</text>
+      <text x="95" y="472">Durable case ledger</text>
+      <text x="485" y="472">AgentCore Runtime · one Strands agent</text>
+      <text x="1262" y="472">Validate and commit</text>
+      <text x="95" y="742">The source-water team owns the action</text>
+    </g>
+    <g font-size="22" fill="#486363">
+      <text x="95" y="278">Rain · river flow · turbidity</text>
+      <text x="95" y="308">Measurement + provenance</text>
+      <text x="485" y="278">Saved schedule and versions</text>
+      <text x="485" y="308">Bounded reads · poll leases</text>
+      <text x="875" y="278">Changes + planned checks</text>
+      <text x="875" y="308">Reserve one bounded attempt</text>
+      <text x="95" y="511">Evidence · reviews · field work</text>
+      <text x="95" y="545">Revisions + saved receipts</text>
+      <text x="485" y="516">Fixed context → evidence and field tools → proposal</text>
+      <text x="485" y="554">Amazon Nova Pro · bounded calls · explicit session stop</text>
+      <text x="1262" y="511">Evidence + case revision</text>
+      <text x="1262" y="545">One atomic transaction</text>
+      <text x="95" y="783">Approve · report · attach · verify · correct</text>
+    </g>
+    <g fill="none" stroke="#206c62" stroke-width="3" marker-end="url(#arrow)">
+      <path d="M400 265H450"/><path d="M790 265H840"/>
+      <path d="M625 330V380H235V420"/>
+      <path d="M1015 330V420"/>
+      <path d="M400 510H450"/><path d="M1180 510H1230"/>
+      <path d="M1385 590V650H330V600"/>
+      <path d="M170 590V690"/>
+      <path d="M670 760H740V650"/>
+    </g>
+    <text x="800" y="636" font-size="20" fill="#206c62">Validated work and human responses return to the same case</text>
+    <text x="810" y="744" font-size="24" font-weight="700">A repeated request returns its saved result.</text>
+    <text x="810" y="783" font-size="22" fill="#486363">A newer human correction keeps its authority.</text>
+    <text x="70" y="870" font-size="17" fill="#637472">Current field-aware boundary: installed SDK tests with a handwritten model. Historical cloud profile: real AgentCore runs.</text>
+  </g>
+</svg>

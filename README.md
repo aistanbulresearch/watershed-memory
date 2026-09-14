@@ -8,7 +8,7 @@ In July 2022, Las Vegas, New Mexico declared a disaster after flooding, ash and 
 
 Every new observation arrives alongside earlier measurements, unfinished reviews and changing evidence coverage. The work has to stay connected from one storm to the next.
 
-**Watershed Memory keeps that work connected.** One watershed case carries observations and operator responses forward. A later event strengthens an existing review; missing station evidence gets its own review. The next storm arrives. The work stays connected.
+**Watershed Memory keeps that work connected.** One watershed case carries observations and operator responses forward. A later event strengthens an existing review; missing station evidence gets its own review. Teams can turn reviews into approved field plans, report the outcome and attach the evidence. The next storm arrives. The work stays connected.
 
 Built by **AIstanbul Research Group** for the **Agents for Humans Hackathon**, Professional Agents track.
 
@@ -39,11 +39,23 @@ The workspace identifies **historical replay · rules**. Operator responses are 
 
 ### The agent behind the case
 
-The Strands integration exposes three bounded tools: read saved case context, retrieve a released observation window, and propose a review against an explicitly selected unfinished task. The service validates the work and its evidence before committing the turn. A model cannot write an operator response or declare the watershed recovered.
+The historical Strands integration exposes three bounded tools: read saved case context, retrieve a released observation window, and propose a review against an explicitly selected unfinished task. The service validates the work and its evidence before committing the turn. A model cannot write an operator response or declare the watershed recovered.
 
 **Real Strands execution has passed all three feasibility cases:** unfinished work, acknowledged work with missing evidence, and new work after completion. The gate records tool choices, usage, duplicate handling and fresh-process persistence. [Run the Strands gate](docs/ENGINEERING.md#real-strands-gate).
 
 **AgentCore runs the agent. The case carries the memory.** The verified cloud run uses two separate Runtime sessions: August continues the same review; September preserves its acknowledgment and opens a separate evidence-gap review. Both repeated requests return saved receipts without another invocation. The case restores identically in a fresh process. [Inspect the verified run](docs/VERIFIED_RUN.md) · [Explore the Runtime boundary](docs/AGENTCORE.md).
+
+### Keep collecting while the operator is away
+
+The current-observation collector checks official USGS rain, flow and turbidity on a saved schedule. It catches late publications within a configured lookback, preserves corrections and queues evidence for case assessment. Restarting keeps the same observations and pending work. **[Run the continuous watch](docs/CONTINUOUS_WATCH.md).**
+
+This current collector performs acquisition without model calls. The browser and cloud walkthrough above demonstrate the separate verified historical agent journey.
+
+**Bring back the decision, not every reading.** The current dispatcher checks new evidence against the last completed assessment, keeps quiet updates in the case and brings back the operator's scheduled check. The agent receives the specific earlier evidence behind an accumulated change. Human-plan changes, source corrections and interrupted decisions retain their history. [Explore selective dispatch](docs/CURRENT_DISPATCH.md).
+
+**The next decision, with the team's plan still in view.** The local current field desk combines collected readings, saved work and the next check. Operators can change or defer a plan; lost confirmations recover without duplicate work, and an outdated form cannot overwrite a newer decision. [Open the current field desk](docs/CURRENT_DESK.md).
+
+**Follow the field work through.** Approve an inspection, report whether it was completed, attach its evidence and record verification of that exact result and evidence set. A later correction preserves the earlier record. The current agent tools inspect those field results alongside source evidence and stage follow-up proposals for human approval. This current tool journey is verified in installed SDK tests with controlled model responses. [Explore the field workflow](docs/FIELD_WORK.md) · [Inspect the current agent and its SDK execution](docs/CURRENT_RUNTIME.md).
 
 ### Engineering worth opening
 
@@ -53,20 +65,24 @@ The Strands integration exposes three bounded tools: read saved case context, re
 - **Execution claims:** concurrent duplicate requests share one planner execution, with a durable claim and replayable receipt.
 - **A durable live allowance:** server restarts preserve the attempt counter; failures consume capacity and saved receipts do not.
 - **Evidence checks:** unreleased observations are unavailable to tools; recorded results are checked against case and source packets.
+- **Continuous acquisition:** bounded source reads, revision-linked evidence, exclusive poll leases and an indexed durable event queue.
+- **Selective attention:** replayable quiet decisions, accumulated-change comparisons and exact operator-plan check times, connected to a bounded Strands runner.
 - **An operator experience:** accessible actions, saved responses, contextual next steps, and evidence/trace panels on demand.
+- **Field results in the next context:** approved sites, revision-linked reports, scoped verification and human-owned follow-through, with immutable context captured before inference.
 
-[Architecture](docs/ARCHITECTURE.md) · [Implementation and checks](docs/ENGINEERING.md) · [Interactive hosting](docs/HOSTING.md) · [Source attribution](THIRD_PARTY_NOTICES.md)
+[Architecture](docs/ARCHITECTURE.md) · [Current field-aware Runtime](docs/CURRENT_RUNTIME.md) · [Implementation and checks](docs/ENGINEERING.md) · [Interactive hosting](docs/HOSTING.md) · [Source attribution](THIRD_PARTY_NOTICES.md)
 
 ### Check it
 
 ```bash
 uv run pytest -q
 node --test tests/request-state.test.mjs
+node --test tests/current-state.test.mjs tests/current-ui.test.mjs
 uv run ruff check watershed_memory tests runtime deployment feasibility/run_strands.py feasibility/run_agentcore.py feasibility/export_evidence.py
 python -m unittest discover -s feasibility -p "test_*.py"
 ```
 
-**209 Python tests** cover the HTTP journey, isolation, failure atomicity, adversarial planner output, request claims, Strands/AgentCore protocols, public evidence export, invocation limits through concurrency and process death, and explicit web exposure with private-metadata filtering. JavaScript request-state checks cover recovery after a lost response. The original proof remains reproducible, with **21 tests and 11 checks across eight fresh processes**. [Original replay guide](feasibility/README.md).
+The Python suite covers the HTTP journey, isolation, failure atomicity, adversarial planner output, request claims, Strands/AgentCore protocols, public evidence export, durable invocation limits and explicit web exposure. Continuous-watch checks add source validation, corrections, restart recovery, 10,000-observation history and a 2,000-event queue. JavaScript request-state checks cover recovery after a lost response. The original proof remains reproducible, with **21 tests and 11 checks across eight fresh processes**. [Original replay guide](feasibility/README.md).
 
 ### License
 

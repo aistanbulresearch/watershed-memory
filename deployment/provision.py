@@ -10,6 +10,7 @@ import hashlib
 import json
 import re
 import uuid
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -17,17 +18,40 @@ import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
-from .agentcore_spec import RuntimeSpec, build_plan
+from .agentcore_spec import RuntimeSpec, build_current_plan, build_plan
 
 
 def encoded(value) -> str:
     return json.dumps(value, sort_keys=True, default=str)
 
 
+def selected_plan(spec: RuntimeSpec, runtime_mode: str) -> dict:
+    if type(runtime_mode) is not str or runtime_mode not in ("historical", "current-v3"):
+        raise ValueError("Select the historical or current-v3 runtime mode explicitly.")
+    if runtime_mode == "current-v3":
+        if not spec.name.startswith("watershed_memory_current_"):
+            raise ValueError("Current runtime requires its separate resource namespace.")
+        return build_current_plan(spec)
+    return build_plan(spec)
+
+
 class Provisioner:
     def __init__(self, spec: RuntimeSpec, artifact: Path, journal: Path, deadline: datetime,
-                 profile: str | None = None, session=None):
-        self.spec, self.plan = spec, build_plan(spec)
+                 profile: str | None = None, session=None, *, runtime_mode: str = "historical"):
+        plan = selected_plan(spec, runtime_mode)
+        if runtime_mode == "current-v3":
+            try:
+                with zipfile.ZipFile(artifact) as archive:
+                    names = archive.namelist()
+                required = {"runtime/current_launch.py", "runtime/current_entrypoint.py"}
+                if (not required <= set(names) or len(names) != len(set(names))
+                        or {"runtime/launch.py", "runtime/entrypoint.py"} & set(names)):
+                    raise ValueError("Current artifact must contain the fixed current launch pair.")
+            except zipfile.BadZipFile as error:
+                raise ValueError("Current runtime requires the reviewed ZIP artifact.") from error
+        self.runtime_mode = runtime_mode
+        self.spec = spec
+        self.plan = plan
         self.artifact, self.journal, self.deadline = artifact, journal, deadline
         if deadline.tzinfo is None:
             raise ValueError("Use an explicit timezone for the provisioning deadline.")
@@ -194,12 +218,13 @@ class Provisioner:
             raise RuntimeError("Runtime is not ready at the intended version.")
         self.verify_role()
         self.verify_bucket()
+        endpoint_name = "current_v3" if self.runtime_mode == "current-v3" else "proof_v1"
         result = self.call("bedrock-agentcore-control", "create_agent_runtime_endpoint", mutation=True,
-            agentRuntimeId=runtime_id, name="proof_v1", agentRuntimeVersion=runtime_version,
+            agentRuntimeId=runtime_id, name=endpoint_name, agentRuntimeVersion=runtime_version,
             clientToken=self.plan["create_runtime"]["clientToken"], tags=self.plan["tags"])
         expected = {"agentRuntimeId": runtime_id, "agentRuntimeArn": runtime["agentRuntimeArn"],
-                    "agentRuntimeEndpointArn": runtime["agentRuntimeArn"] + "/runtime-endpoint/proof_v1",
-                    "endpointName": "proof_v1", "targetVersion": runtime_version}
+                    "agentRuntimeEndpointArn": runtime["agentRuntimeArn"] + "/runtime-endpoint/" + endpoint_name,
+                    "endpointName": endpoint_name, "targetVersion": runtime_version}
         if any(result.get(key) != value for key, value in expected.items()):
             raise RuntimeError("Endpoint response differs from this proof; reconcile before continuing.")
         return result
@@ -256,6 +281,7 @@ def main() -> None:
     parser.add_argument("--journal", type=Path, default=Path(".local/runtime/provision.jsonl"))
     parser.add_argument("--deadline", required=True, help="ISO8601 UTC work-window deadline")
     parser.add_argument("--profile")
+    parser.add_argument("--runtime-mode", choices=("historical", "current-v3"), default="historical")
     parser.add_argument("--runtime-id", default="")
     parser.add_argument("--runtime-version", help="Explicit version returned by creation or metadata update")
     args = parser.parse_args()
@@ -263,10 +289,11 @@ def main() -> None:
         parser.error("Endpoint creation requires the explicit verified --runtime-version.")
     spec = RuntimeSpec(**json.loads(args.spec.read_text(encoding="utf-8-sig")))
     if args.action == "render":
-        print(json.dumps(build_plan(spec), indent=2))
+        plan = selected_plan(spec, args.runtime_mode)
+        print(json.dumps(plan, indent=2))
         return
     provisioner = Provisioner(spec, args.artifact, args.journal,
-        datetime.fromisoformat(args.deadline), args.profile)
+        datetime.fromisoformat(args.deadline), args.profile, runtime_mode=args.runtime_mode)
     provisioner.preflight()
     if args.action == "endpoint":
         result = provisioner.endpoint(args.runtime_id, args.runtime_version)

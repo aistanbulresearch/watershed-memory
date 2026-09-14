@@ -1,10 +1,13 @@
 """Same-origin operator API; serves only the packaged public interface."""
 
+from ipaddress import ip_address
 from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Request
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
@@ -13,6 +16,8 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from . import __version__
 from .agentcore_client import AgentCoreTurnError
 from .budget import DemoBudgetExhausted
+from .current.desk import CurrentDesk
+from .current.http import router as current_router
 from .public_http import BoundaryConfig, BurstLimiter, project_public
 from .service import Conflict, InProgress, Service, SessionNotFound
 from .strands_agent import AgentTurnError
@@ -32,9 +37,15 @@ class ResponseBody(AdvanceBody):
     note: str = Field(min_length=1, max_length=1000)
 
 
-def create_app(service: Service | None = None, *, boundary_config: BoundaryConfig | None = None) -> FastAPI:
-    ledger = service or Service(Path(".local/runtime/cases.sqlite"))
+def create_app(service: Service | None = None, *, boundary_config: BoundaryConfig | None = None,
+               current_desk: CurrentDesk | None = None) -> FastAPI:
     config = boundary_config or BoundaryConfig()
+    if current_desk is not None and (
+        type(current_desk) is not CurrentDesk
+        or config.allowed_hosts != ("127.0.0.1", "localhost") or config.allowed_origins
+    ):
+        raise ValueError("current operator desk requires the local HTTP boundary")
+    ledger = service or Service(Path(".local/runtime/cases.sqlite"))
     limiter = BurstLimiter(config)
     app = FastAPI(title="Watershed Memory", version=__version__, docs_url=None, redoc_url=None)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(config.allowed_hosts),
@@ -50,6 +61,17 @@ def create_app(service: Service | None = None, *, boundary_config: BoundaryConfi
             response.headers["Referrer-Policy"] = "no-referrer"
             response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
             return response
+
+        if current_desk is not None and (
+            request.url.path.rstrip("/") == "/current"
+            or request.url.path == "/api/current" or request.url.path.startswith("/api/current/")
+        ):
+            try:
+                local_peer = request.client is not None and ip_address(request.client.host).is_loopback
+            except ValueError:
+                local_peer = False
+            if not local_peer:
+                return reject("Open this operator desk on the local machine.", 403)
 
         if request.method == "POST":
             host_header = request.headers.get("host", "")
@@ -86,6 +108,12 @@ def create_app(service: Service | None = None, *, boundary_config: BoundaryConfi
     @app.exception_handler(SessionNotFound)
     async def missing(_request: Request, _error: SessionNotFound):
         return JSONResponse({"detail": "This replay session was not found."}, status_code=404)
+
+    @app.exception_handler(RequestValidationError)
+    async def invalid_body(request: Request, error: RequestValidationError):
+        if request.url.path.startswith("/api/current/"):
+            return JSONResponse({"detail": "Check the response fields and try again."}, status_code=422)
+        return await request_validation_exception_handler(request, error)
 
     @app.exception_handler(Conflict)
     async def conflict(_request: Request, error: Conflict):
@@ -133,5 +161,7 @@ def create_app(service: Service | None = None, *, boundary_config: BoundaryConfi
     def index():
         return FileResponse(public / "index.html")
 
+    if current_desk is not None:
+        app.include_router(current_router(current_desk))
     app.mount("/static", StaticFiles(directory=public), name="static")
     return app
