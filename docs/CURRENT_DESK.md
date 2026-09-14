@@ -6,6 +6,16 @@ Source evidence and execution details sit one level deeper. Open a saved assessm
 
 ## Open an existing current case
 
+### Open the offline judge demonstration
+
+From a fresh clone, create a disposable current field case from the bundled saved USGS fixture:
+
+```sh
+uv run python -m watershed_memory.current.demo_seed --output .local/judge-demo
+```
+
+The command makes no network, AWS or model calls. It prints the exact loopback launch command. Run that command, then open **http://127.0.0.1:8771/current**. The case is explicitly simulated and opens with one approved visual inspection whose result is **PARTIAL**: the outer demonstration marker was inaccessible, an operator record is attached, and the exact scope is verified. The output directory must be new; the seed never overwrites an existing directory.
+
 Run the desk against a private database that already contains a [current work case](CURRENT_WORK.md). The collector, case and [dispatcher](CURRENT_DISPATCH.md) share that database when configured together.
 
 ```sh
