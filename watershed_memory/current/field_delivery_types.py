@@ -79,7 +79,7 @@ class CurrentExecutionV3:
         for value in (self.model_id, self.instruction_version, self.sdk_version):
             if type(value) is not str or not 1 <= len(value) <= 200 or not value.isprintable():
                 raise ValueError("invalid execution profile")
-        _count(self.model_calls, "model_calls", 8, 1)
+        _count(self.model_calls, "model_calls", 12, 1)
         minimum = len(self.assessment.base.trace) + len(self.assessment.field_trace)
         _count(self.tool_attempts, "tool_attempts", 16, 1)
         if (
@@ -134,7 +134,7 @@ class CurrentFailureV3:
         for value in (self.model_id, self.instruction_version, self.sdk_version):
             if type(value) is not str or not 1 <= len(value) <= 200 or not value.isprintable():
                 raise ValueError("invalid failure profile")
-        _count(self.model_calls, "model_calls", 8)
+        _count(self.model_calls, "model_calls", 12)
         _count(self.tool_attempts, "tool_attempts", 16)
         if (
             type(self.source_trace) is not tuple

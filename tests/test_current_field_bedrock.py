@@ -38,7 +38,7 @@ def test_fixed_production_profile_and_bounded_provider_configuration(constructor
     assert planner.profile.model_id == "amazon.nova-pro-v1:0"
     assert planner.profile.instruction_version == "watershed-current-v3"
     assert planner.profile.sdk_version == version("strands-agents")
-    assert planner.scripted_test is False and planner.max_calls == 8 and planner.seconds == 120
+    assert planner.scripted_test is False and planner.max_calls == 12 and planner.seconds == 120
     assert planner.model is model and model.response_count == 0
     assert calls[0] == ("session", {"profile_name": profile, "region_name": "us-east-1"})
     assert calls[1][0] == "model" and len(calls) == 2
@@ -50,6 +50,29 @@ def test_fixed_production_profile_and_bounded_provider_configuration(constructor
     config = settings["boto_client_config"]
     assert config.connect_timeout == 5 and config.read_timeout == 40
     assert config.retries == {"max_attempts": 0}
+
+
+def test_nova_2_lite_enables_bounded_low_reasoning_without_changing_turn_guards(constructors):
+    calls, session, model = constructors
+    planner = bedrock_field_planner(
+        "us.amazon.nova-2-lite-v1:0", "us-east-1", aws_profile="watershed-memory"
+    )
+    assert planner.profile.model_id == "us.amazon.nova-2-lite-v1:0"
+    assert planner.scripted_test is False and planner.max_calls == 12 and planner.seconds == 120
+    assert planner.model is model and model.response_count == 0
+    assert calls[0] == (
+        "session", {"profile_name": "watershed-memory", "region_name": "us-east-1"}
+    )
+    settings = calls[1][1]
+    assert set(settings) == {
+        "model_id", "max_tokens", "temperature", "boto_session", "boto_client_config",
+        "additional_request_fields",
+    }
+    assert settings["boto_session"] is session
+    assert settings["max_tokens"] == 5000 and settings["temperature"] == 0
+    assert settings["additional_request_fields"] == {
+        "reasoningConfig": {"type": "enabled", "maxReasoningEffort": "low"}
+    }
 
 
 @pytest.mark.parametrize("change", [

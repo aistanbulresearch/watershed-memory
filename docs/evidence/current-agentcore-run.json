@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "label": "Recorded real Bedrock and AgentCore executions",
+  "recorded_on": "2026-09-14",
+  "scenario": {
+    "station": "USGS-08380500",
+    "saved_source_observations": 52,
+    "source_observed_on": "2026-09-12",
+    "operator_actions": "SIMULATED",
+    "field_report_outcome": "PARTIAL",
+    "report_verification": "VERIFIED",
+    "case_clock": "Accelerated scenario; follow-up dates are relative to the saved case, not the cloud execution date"
+  },
+  "model": "us.amazon.nova-2-lite-v1:0",
+  "reasoning_effort": "low",
+  "strands_sdk_version": "1.55.1",
+  "instruction_version": "watershed-current-v3",
+  "source_commit": "f55c23f23067737038e72d8b953f562c000c673c",
+  "artifact_sha256": "acc142da8c48feb6b30bde5509988f266652ae7b9f81e2f32d8c3b1d9c37aadb",
+  "runs": [
+    {
+      "execution": "REAL_BEDROCK_STRANDS",
+      "completed_at": "2026-09-14T22:41:40.384815+00:00",
+      "status": "PASSED",
+      "outcome": "COMMITTED",
+      "source_requests_during_turn": 0,
+      "model_calls": 11,
+      "tool_attempts": 10,
+      "model_elapsed_seconds": 39.469,
+      "usage": {
+        "inputTokens": 59022,
+        "outputTokens": 6535,
+        "totalTokens": 65557
+      },
+      "tool_sequence": [
+        "get_case_context",
+        "inspect_current_series",
+        "inspect_source_health",
+        "compare_prior_event",
+        "find_relevant_reviews",
+        "stage_assessment",
+        "get_field_context",
+        "inspect_field_work",
+        "list_approved_field_locations",
+        "stage_field_decision"
+      ],
+      "review_decision": "CONTINUE_EXISTING_REVIEW",
+      "field_decision": "PROPOSE_FIELD_PLAN",
+      "field_reason": "Verified partial inspection requires follow-up to complete scope of demonstration marker access assessment",
+      "proposal": {
+        "activity": "VISUAL_INSPECTION",
+        "assignee_role": "Source-water field lead",
+        "purpose": "Complete assessment of demonstration marker accessibility and document any additional inaccessible areas",
+        "required_evidence": [
+          "INSPECTION_RECORD_REFERENCE"
+        ],
+        "window_end": "2026-09-13T12:00:00+00:00",
+        "window_start": "2026-09-13T10:00:00+00:00"
+      },
+      "proposal_state": "PROPOSED",
+      "approved_by_human": false,
+      "basis_report_revision": 1,
+      "basis_verification_level": "VERIFIED",
+      "checks": {
+        "committed": true,
+        "finish_replay": true,
+        "one_attempt": true,
+        "one_provider_slot": true,
+        "partial_followup": true,
+        "readings_unchanged": true,
+        "replay_unchanged": true,
+        "saved_receipt_replay": true,
+        "unapproved_agent_plan": true
+      },
+      "verification_status": "VERIFIED",
+      "execution_sha256": "aae03836fc68c9f2000a5e7a6e2304ffa6b4b2aeff0791b4402f58cfe7e91733",
+      "verification_sha256": "b7824a569a4e90e7d0d18d79cf4d8e19c558789e5ef3e9e448ac1b979fd0fab5"
+    },
+    {
+      "execution": "REAL_AGENTCORE_STRANDS",
+      "completed_at": "2026-09-14T22:56:18.521874+00:00",
+      "status": "PASSED",
+      "outcome": "COMMITTED",
+      "source_requests_during_turn": 0,
+      "model_calls": 10,
+      "tool_attempts": 10,
+      "model_elapsed_seconds": 39.157,
+      "usage": {
+        "inputTokens": 53809,
+        "outputTokens": 6174,
+        "totalTokens": 59983
+      },
+      "tool_sequence": [
+        "get_case_context",
+        "inspect_current_series",
+        "inspect_source_health",
+        "compare_prior_event",
+        "find_relevant_reviews",
+        "stage_assessment",
+        "get_field_context",
+        "inspect_field_work",
+        "list_approved_field_locations",
+        "stage_field_decision"
+      ],
+      "review_decision": "CONTINUE_EXISTING_REVIEW",
+      "field_decision": "PROPOSE_FIELD_PLAN",
+      "field_reason": "The verified PARTIAL result indicates the outer demonstration marker remains inaccessible; propose follow-up inspection to resolve accessibility issues",
+      "proposal": {
+        "activity": "VISUAL_INSPECTION",
+        "assignee_role": "Source-water field lead",
+        "purpose": "Re-inspect the demonstration marker to resolve accessibility issues and document findings",
+        "required_evidence": [
+          "INSPECTION_RECORD_REFERENCE"
+        ],
+        "window_end": "2026-09-13T10:30:00+00:00",
+        "window_start": "2026-09-13T10:00:00+00:00"
+      },
+      "proposal_state": "PROPOSED",
+      "approved_by_human": false,
+      "basis_report_revision": 1,
+      "basis_verification_level": "VERIFIED",
+      "checks": {
+        "committed": true,
+        "finish_replay": true,
+        "one_attempt": true,
+        "one_provider_slot": true,
+        "partial_followup": true,
+        "readings_unchanged": true,
+        "replay_unchanged": true,
+        "saved_receipt_replay": true,
+        "unapproved_agent_plan": true
+      },
+      "verification_status": "VERIFIED",
+      "execution_sha256": "c89bf31bf02bab4f44549bcb7a6391ec0f50c72be30839722f3d05643881281b",
+      "verification_sha256": "24c23bf28245dd5de107c0e5f15dee4b7476229670f1d8139bfe89959376fa9d",
+      "runtime_version": "1",
+      "transport_outcome": "VALIDATED_EXECUTION",
+      "session_stop_status": "STOP_REQUEST_ACCEPTED"
+    }
+  ]
+}

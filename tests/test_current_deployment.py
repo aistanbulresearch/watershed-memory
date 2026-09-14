@@ -176,6 +176,56 @@ def specification(**changes):
     })
 
 
+def nova_2_specification(**changes):
+    return specification(**{
+        "model_id": "us.amazon.nova-2-lite-v1:0",
+        "name": "watershed_memory_current_20260914",
+        **changes,
+    })
+
+
+def test_nova_2_lite_current_plan_has_exact_cross_region_inference_permissions():
+    spec = nova_2_specification()
+    plan = agentcore_spec.build_current_plan(spec)
+    statements = plan["execution_policy"]["Statement"]
+    profile = next(item for item in statements if item["Sid"] == "BedrockInferenceProfile")
+    targets = next(item for item in statements if item["Sid"] == "BedrockInferenceTargets")
+    profile_arn = (
+        "arn:aws:bedrock:us-east-1:123456789012:"
+        "inference-profile/us.amazon.nova-2-lite-v1:0"
+    )
+    actions = ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"]
+    assert profile == {
+        "Sid": "BedrockInferenceProfile", "Effect": "Allow", "Action": actions,
+        "Resource": [profile_arn],
+    }
+    assert targets == {
+        "Sid": "BedrockInferenceTargets", "Effect": "Allow", "Action": actions,
+        "Resource": [
+            "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-2-lite-v1:0",
+            "arn:aws:bedrock:us-east-2::foundation-model/amazon.nova-2-lite-v1:0",
+            "arn:aws:bedrock:us-west-2::foundation-model/amazon.nova-2-lite-v1:0",
+        ],
+        "Condition": {"StringEquals": {"bedrock:InferenceProfileArn": profile_arn}},
+    }
+    assert not any(item["Sid"] == "BedrockModel" for item in statements)
+    request = plan["create_runtime"]
+    assert request["environmentVariables"]["WATERSHED_MODEL_ID"] == spec.model_id
+
+
+@pytest.mark.parametrize("changes", [
+    {"model_id": "us.amazon.nova-premier-v1:0"},
+    {"model_id": "amazon.nova-2-lite-v1:0"},
+    {"model_id": "us.amazon.nova-2-lite-v1:0", "region": "us-west-2"},
+    {"model_id": "us.amazon.nova-2-lite-v1:0", "name": "watershed_memory_historical"},
+    {"model_id": "us.amazon.nova-2-lite-v1:0", "name": "watershed_memory_current"},
+    {"model_id": "us.amazon.nova-2-lite-v1:0", "name": "watershed_memory_currently"},
+])
+def test_unapproved_model_or_nova_2_scope_is_refused(changes):
+    with pytest.raises(ValueError):
+        specification(**changes)
+
+
 def test_current_plan_changes_only_fixed_target_description_and_token():
     spec = specification()
     old = agentcore_spec.build_plan(spec)

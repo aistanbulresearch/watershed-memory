@@ -1,6 +1,27 @@
 # Give each judge a continuing case
 
-The [public walkthrough](https://aistanbulresearch.github.io/watershed-memory/) is available now without an account or model charges. It presents the verified case journey and the actual cloud receipts. The runnable operator desk adds a separate, interactive case for each browser session.
+The **[public operator workspace](https://watershed.aistanbulresearch.com/current)** gives each browser its own continuing case. It runs behind HTTPS with persistent SQLite storage, secure session cookies and a separate process. Visitors can approve work, correct a field report and reload their saved case without an account. The case contains saved real USGS observations and simulated operator work; this public route makes no AWS calls and holds no AWS credentials.
+
+The **[recorded cloud walkthrough](https://aistanbulresearch.github.io/watershed-memory/)** and **[current verified AgentCore run](CURRENT_VERIFIED_RUN.md)** show the actual agent executions and their receipts.
+
+## Hosted field desk
+
+From a checkout with the frozen Python dependencies installed:
+
+```bash
+python -m deployment.host_current \
+  --data-dir /var/lib/watershed-memory/sessions \
+  --hostname watershed.aistanbulresearch.com \
+  --port 8782
+```
+
+Place an HTTPS reverse proxy in front of the loopback listener, preserve the exact hostname, and keep its data directory writable only by the application user. Use one process and a persistent filesystem with SQLite locking. Each browser receives a secure, HttpOnly session cookie valid for 24 hours. Valid expired sessions can be reclaimed when capacity is reached; damaged or unexpected files are retained for inspection.
+
+Deployment acceptance passed on the public HTTPS address: independent browser cases, a saved approval, persistence through a service restart, a repeated request returning its saved result, origin enforcement and unauthenticated API rejection. The actual Linux host passed all **41 public-host tests**, including link protection. No model calls were made by these checks.
+
+## Optional agent-connected deployment
+
+The following configuration describes the separate historical operator service with live agent access. The public field demo above uses its own isolated host entry point.
 
 For an interactive deployment, keep the existing case service on **one application worker with a persistent SQLite volume**, behind an HTTPS ingress. The agent runs on the pinned AgentCore Runtime; the application owns the case, operator responses, execution claims and receipts.
 
@@ -60,4 +81,4 @@ Before giving judges the interactive address:
 - Inspect browser responses and application/ingress logs for private infrastructure identifiers and session capabilities.
 - Add ingress admission controls for fair access; one visitor should not monopolize the global application allowance. Keep the free recorded walkthrough available alongside the interactive experience.
 
-The selected host, its storage and its ingress still require this deployment acceptance. The public recorded walkthrough and local operator desk are the currently verified access surfaces. [Architecture](ARCHITECTURE.md) · [AgentCore execution](AGENTCORE.md)
+Apply these checks to any additional agent-connected host. The public field desk has passed its separate deployment acceptance above. [Architecture](ARCHITECTURE.md) · [AgentCore execution](AGENTCORE.md)

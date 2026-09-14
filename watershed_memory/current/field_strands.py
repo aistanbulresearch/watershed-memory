@@ -17,6 +17,7 @@ from .case_types import _text
 from .context_v3_types import CurrentContextV3
 from .delivery_types import InvocationProfile
 from .field_delivery_types import CurrentExecutionV3, CurrentFailureV3
+from .field_model_protocol import FieldModelProtocol, FieldProtocolRequestGuard
 from .field_planner import FieldPlannerErrorV3, FieldPlannerV3
 from .field_sdk_budget import FieldSDKToolBudget
 from .field_sdk_requests import FieldSDKRequestGuard
@@ -73,12 +74,16 @@ evidence and verification values returned by inspection. Bounded history never p
 work is absent. A corrected report does not inherit an earlier report's verification.
 
 6. The field dispositions are NO_NEW_FIELD_PLAN, AWAIT_VERIFICATION and PROPOSE_FIELD_PLAN.
-A COMPLETE result with verification_level VERIFIED supports NO_NEW_FIELD_PLAN. A COMPLETE
-result with REPORTED or EVIDENCE_ATTACHED supports AWAIT_VERIFICATION. The only verification
-levels are REPORTED, EVIDENCE_ATTACHED and VERIFIED. Existing current or stranded active work
-blocks a duplicate proposal. A follow-up proposal may use the newest selected PARTIAL or
-NOT_DONE result for its exact active review and must cite that inspected result as its basis.
-Do not replace verified complete work merely because another event arrived.
+Report outcome and verification level are orthogonal. VERIFIED confirms the human-stated scope
+of a report; it never changes a PARTIAL or NOT_DONE outcome into COMPLETE. A COMPLETE result
+with verification_level VERIFIED supports NO_NEW_FIELD_PLAN. A COMPLETE result with REPORTED
+or EVIDENCE_ATTACHED supports AWAIT_VERIFICATION. Do not choose NO_NEW_FIELD_PLAN for unfinished
+work merely because its verification level is VERIFIED; that choice requires a concrete
+evidence or blocker reason, such as no eligible approved site. The only verification levels are
+REPORTED, EVIDENCE_ATTACHED and VERIFIED. Existing current or stranded active work blocks a
+duplicate proposal. A follow-up proposal may use the newest selected PARTIAL or NOT_DONE result
+for its exact active review and must cite that inspected result as its basis. Do not replace
+verified complete work merely because another event arrived.
 
 7. Before PROPOSE_FIELD_PLAN, call list_approved_field_locations with the exact activity to
 be proposed, then use an exact returned location_id and revision that authorizes it. The only
@@ -106,7 +111,7 @@ physical recovery evidence, source-water observations, field-work completion/ver
 monitoring coverage distinct. Completion does not prove watershed recovery or safe drinking
 water. Do not issue treatment changes or warnings.
 
-There are at most 8 model responses and 16 admitted assembled SDK tool requests, including
+There are at most 12 model responses and 16 admitted assembled SDK tool requests, including
 rejected requests. A batch over remaining capacity is refused whole. Conserve calls: do not
 repeat successful reads. After both decisions are staged, finish briefly with end_turn.
 """
@@ -127,14 +132,14 @@ class CurrentStrandsPlannerV3(FieldPlannerV3):
         *,
         model_id: str,
         scripted_test: bool,
-        max_calls: int = 8,
+        max_calls: int = 12,
         seconds: float = 120,
     ):
         if not isinstance(model, Model) or type(scripted_test) is not bool:
             raise ValueError("an initialized Strands model and execution label are required")
         _text(model_id, "model_id", 1, 200)
-        if type(max_calls) is not int or not 1 <= max_calls <= 8:
-            raise ValueError("field inference calls must be within one to eight")
+        if type(max_calls) is not int or not 1 <= max_calls <= 12:
+            raise ValueError("field inference calls must be within one to twelve")
         if (
             type(seconds) not in (int, float)
             or not math.isfinite(seconds)
@@ -190,11 +195,12 @@ class CurrentStrandsPlannerV3(FieldPlannerV3):
             functions = [getattr(evidence.source, name) for name in source_names]
             functions += [getattr(evidence, name) for name in field_names]
             arguments = FieldSDKRequestGuard(functions)
+            protocol = FieldModelProtocol(self.model, evidence)
             agent = Agent(
-                model=self.model,
+                model=protocol,
                 system_prompt=SYSTEM_PROMPT + HEALTH_INSTRUCTIONS,
                 tools=[tool(function) for function in functions],
-                hooks=[budget, requests, arguments],
+                hooks=[budget, requests, arguments, FieldProtocolRequestGuard(protocol)],
                 callback_handler=None,
                 retry_strategy=None,
                 tool_executor=SequentialToolExecutor(),

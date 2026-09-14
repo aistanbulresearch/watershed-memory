@@ -71,6 +71,7 @@ async function request(path, options = {}) {
 
 function sourcePanel(source) {
   const node = panel('Latest collected data', source.label);
+  node.className += ' source-panel';
   const times = element('div', null, 'facts');
   times.append(fact('Collection through', date(source.collected_through)), fact('Next saved check', date(source.next_poll_at)));
   node.append(times);
@@ -93,6 +94,7 @@ function sourcePanel(source) {
 
 function workPanel() {
   const node = panel('The plan we are carrying forward', `${state.data.work.length} open review${state.data.work.length === 1 ? '' : 's'}`);
+  node.className += ' work-panel';
   if (!state.data.work.length) node.append(element('p', 'No open review needs a response right now. Saved assessments remain available below.', 'empty'));
   state.data.work.forEach(task => {
     const card = element('article', null, 'work-card');
@@ -115,6 +117,7 @@ function workPanel() {
 
 function technicalPanel() {
   const node = panel('What supports this case', 'Source and execution details');
+  node.className += ' evidence-panel';
   const overview = disclosure('Inspect source window & agent execution');
   overview.append(fact('Case ID', state.data.case.case_id), fact('Case revision', state.data.case.revision));
   const interval = state.data.interval;
@@ -196,18 +199,20 @@ function render() {
   if (state.fieldReceiptPlanId) app.append(button('Inspect confirmed field record', () => fieldControls.inspect(state.fieldReceiptPlanId), true));
   if (state.storageError) app.append(element('p', 'The saved response store could not be read. Decisions are paused until local storage can be reconciled.', 'notice'));
   if (state.data.dispatch?.active_attempt_id) app.append(element('p', `Agent review: ${words(state.data.dispatch.active_status)}. Its saved attempt is held for reconciliation.`, 'notice'));
-  app.append(workPanel());
+  const workspace = element('div', null, 'workspace-grid');
+  app.append(workspace); workspace.append(workPanel());
   const field = renderFieldPanel(state.data, {element,button,panel,fact,date,blocked:blocked(),
     onAction: intent => fieldControls.action(intent), onInspect: id => fieldControls.inspect(id)});
-  if (field) app.append(field);
-  app.append(sourcePanel(state.data.source));
+  if (field) { field.className += ' field-panel'; workspace.append(field); }
+  workspace.append(sourcePanel(state.data.source));
   const dimensions = panel('Four parts of the same watershed');
+  dimensions.className += ' status-panel';
   const grid = element('div', null, 'dimension-grid');
   state.data.dimensions.forEach(item => {
     const card = element('article', null, 'dimension');
     card.append(element('h3', item.label), element('strong', words(item.status)), element('p', item.detail)); grid.append(card);
   });
-  dimensions.append(grid); app.append(dimensions, technicalPanel());
+  dimensions.append(grid); workspace.append(dimensions, technicalPanel());
 }
 
 function responseDialog(task, action, pending = null) {

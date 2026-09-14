@@ -12,6 +12,7 @@ from .field_strands import CurrentStrandsPlannerV3
 
 _ERROR = "invalid current Bedrock configuration"
 _REGION = re.compile(r"[a-z]{2}(?:-[a-z0-9]+)+-[0-9]+\Z")
+_NOVA_2_LITE = "us.amazon.nova-2-lite-v1:0"
 
 
 def _valid_text(value: object, *, allow_none: bool = False) -> bool:
@@ -41,19 +42,27 @@ def bedrock_field_planner(
         raise ValueError(_ERROR) from None
     try:
         session = boto3.Session(profile_name=aws_profile, region_name=region)
-        model = BedrockModel(
-            model_id=model_id,
-            max_tokens=1000,
-            temperature=0,
-            boto_session=session,
-            boto_client_config=Config(
+        model_config = {
+            "model_id": model_id,
+            "max_tokens": 1000,
+            "temperature": 0,
+            "boto_session": session,
+            "boto_client_config": Config(
                 connect_timeout=5,
                 read_timeout=40,
                 retries={"max_attempts": 0},
             ),
-        )
+        }
+        if model_id == _NOVA_2_LITE:
+            model_config.update(
+                max_tokens=5000,
+                additional_request_fields={
+                    "reasoningConfig": {"type": "enabled", "maxReasoningEffort": "low"}
+                },
+            )
+        model = BedrockModel(**model_config)
         return CurrentStrandsPlannerV3(
-            model, model_id=model_id, scripted_test=False, max_calls=8, seconds=120,
+            model, model_id=model_id, scripted_test=False, max_calls=12, seconds=120,
         )
     except Exception:
         raise ValueError(_ERROR) from None
