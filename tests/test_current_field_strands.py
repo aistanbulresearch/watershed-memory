@@ -33,7 +33,7 @@ def planner(model=None, **kwargs):
     "options",
     [
         {"max_calls": 0},
-        {"max_calls": 9},
+        {"max_calls": 13},
         {"max_calls": True},
         {"max_calls": 1.0},
         {"seconds": 0},
@@ -109,9 +109,13 @@ def test_actual_sdk_uses_exact_field_result_and_leaves_database_untouched(
     assert result.assessment.base.decisions[0].target_task_id == field[3].task_id
     assert CANARY not in str(result)
     assert contents(field[0]) == before
-    schemas = {item["name"]: item["inputSchema"]["json"] for item in model.tool_specs[0]}
-    assert len(schemas) == 11
-    field_schema = schemas["stage_field_decision"]
+    assert [item["name"] for item in model.tool_specs[0]] == ["get_case_context"]
+    field_schema = next(
+        item["inputSchema"]["json"]
+        for specs in model.tool_specs
+        for item in specs
+        if item["name"] == "stage_field_decision"
+    )
     assert len(field_schema["required"]) == 16
     assert set(field_schema["required"]) == set(field_schema["properties"])
     if expected == "PROPOSE_FIELD_PLAN":
@@ -210,7 +214,7 @@ def test_invalid_or_partial_turn_has_frozen_sanitized_failure(field, batch, atte
 def test_model_response_budget_stops_before_ninth_response(field):
     model = BatchModel([[("unknown_tool", {})]] * 9)
     with pytest.raises(CurrentTurnErrorV3) as caught:
-        planner(model).plan(load(field))
+        planner(model, max_calls=8).plan(load(field))
     assert model.responses == 8
     assert caught.value.failure.model_calls == 8
     assert caught.value.failure.tool_attempts == 8

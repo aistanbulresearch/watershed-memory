@@ -110,7 +110,7 @@ def test_execution_and_failure_are_immutable_and_preserve_charged_attempts():
     [
         {"model_calls": True},
         {"model_calls": 0},
-        {"model_calls": 9},
+        {"model_calls": 13},
         {"tool_attempts": True},
         {"tool_attempts": 2},
         {"tool_attempts": 17},
@@ -132,7 +132,7 @@ def test_invalid_execution_is_rejected(change):
     [
         {"case_revision": True},
         {"context_digest": "A" * 64},
-        {"model_calls": 9},
+        {"model_calls": 13},
         {"tool_attempts": 17},
         {"source_trace": assessment().base.trace},
         {"field_trace": list(assessment().field_trace)},
@@ -143,6 +143,11 @@ def test_invalid_execution_is_rejected(change):
 def test_invalid_failure_cannot_misstate_counts_or_context(change):
     with pytest.raises(ValueError):
         failure(**change)
+
+
+def test_execution_and_failure_accept_twelve_model_responses():
+    assert execution(model_calls=12).model_calls == 12
+    assert failure(model_calls=12).model_calls == 12
 
 
 @pytest.mark.parametrize("status", ["RESERVED", "COMMITTED", "FAILED", "STALE", "ABANDONED"])

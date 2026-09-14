@@ -83,7 +83,7 @@ def test_actual_sdk_follows_partial_result_to_bounded_field_followup(field):
     ]
     assert result.model_calls == 6
     assert result.tool_attempts == 9
-    assert result.model_calls <= 8 and result.tool_attempts <= 16
+    assert result.model_calls <= 12 and result.tool_attempts <= 16
     assert result.assessment.field.disposition == "PROPOSE_FIELD_PLAN"
 
     basis = context.field_work.latest_results[0]
@@ -96,12 +96,24 @@ def test_actual_sdk_follows_partial_result_to_bounded_field_followup(field):
     assert proposal.task_id == context.base.reviews[0].task_id
     assert proposal.review_revision == context.base.reviews[0].revision
 
-    schemas = {item["name"]: item["inputSchema"]["json"] for item in model.tool_specs[0]}
-    assert set(schemas["stage_assessment"]["required"]) == set(
-        schemas["stage_assessment"]["properties"]
+    assert [item["name"] for item in model.tool_specs[0]] == ["get_case_context"]
+    source_schema = next(
+        item["inputSchema"]["json"]
+        for specs in model.tool_specs
+        for item in specs
+        if item["name"] == "stage_assessment"
     )
-    assert set(schemas["stage_field_decision"]["required"]) == set(
-        schemas["stage_field_decision"]["properties"]
+    field_schema = next(
+        item["inputSchema"]["json"]
+        for specs in model.tool_specs
+        for item in specs
+        if item["name"] == "stage_field_decision"
     )
-    assert len(schemas["stage_assessment"]["required"]) == 8
-    assert len(schemas["stage_field_decision"]["required"]) == 16
+    assert set(source_schema["required"]) == set(
+        source_schema["properties"]
+    )
+    assert set(field_schema["required"]) == set(
+        field_schema["properties"]
+    )
+    assert len(source_schema["required"]) == 8
+    assert len(field_schema["required"]) == 16

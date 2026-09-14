@@ -53,7 +53,7 @@ def bedrock_field_planner(
             ),
         )
         return CurrentStrandsPlannerV3(
-            model, model_id=model_id, scripted_test=False, max_calls=8, seconds=120,
+            model, model_id=model_id, scripted_test=False, max_calls=12, seconds=120,
         )
     except Exception:
         raise ValueError(_ERROR) from None

@@ -29,9 +29,11 @@ An agent must read the source assessment, inspect existing assignments and relev
 
 Each staged decision has a replayable tool trace. Direct source and field tools share a sixteen-attempt budget. The Strands adapter separately admits at most sixteen assembled SDK tool requests, including requests subsequently refused for invalid names or arguments. An oversized batch is refused before any member executes and adds zero admitted requests; a separate failure code records exhaustion. Existing source-only tools keep their twelve-attempt limit.
 
+The SDK also checks each complete batch against the field trace's eight-receipt limit before executing its tools. It reserves room for the final decision and requires staging to be the last request, so optional inspections and repeated calls cannot consume that final slot.
+
 ## From a field result to the next Strands decision
 
-The adapter runs eleven tools with sequential execution and at most eight model responses. It completes the source assessment before opening field context, then inspects the relevant results and approved locations. Strict input checks preserve exact argument types and required explicit nulls before SDK conversion. Opaque provider reasoning signatures stay outside domain arguments and receipts.
+The adapter has eleven tools and exposes the next available tools as each step succeeds: source evidence, source assessment, field inspection, approved locations and the final decision. The model still chooses the assessment and proposed work; the domain tools validate every request. Sequential execution allows at most twelve model responses and sixteen assembled tool requests within a 120-second turn. Strict input checks preserve exact argument types and required explicit nulls before SDK conversion. Opaque provider reasoning signatures stay outside domain arguments and receipts.
 
 The three-result integration tests run the actual Strands SDK with a clearly labelled handwritten model fixture. Six responses read actual tool outputs and select the corresponding next action. A newer result belonging to another review cannot replace the selected review's basis. These tests verify SDK integration and controlled decision behavior; real-provider execution is a separate acceptance step.
 
