@@ -5,6 +5,10 @@ import re
 import uuid
 from dataclasses import dataclass
 
+_NOVA_PRO = "amazon.nova-pro-v1:0"
+_NOVA_2_LITE = "us.amazon.nova-2-lite-v1:0"
+_NOVA_2_TARGET_REGIONS = ("us-east-1", "us-east-2", "us-west-2")
+
 
 @dataclass(frozen=True)
 class RuntimeSpec:
@@ -18,11 +22,45 @@ class RuntimeSpec:
         patterns = {
             "account": r"[0-9]{12}", "region": r"[a-z]{2}-[a-z]+-[0-9]",
             "name": r"watershed_memory_[a-zA-Z0-9_]{1,31}",
-            "model_id": r"amazon\.nova-pro-v1:0", "artifact_sha256": r"[0-9a-f]{64}",
+            "artifact_sha256": r"[0-9a-f]{64}",
         }
         for field, pattern in patterns.items():
             if not re.fullmatch(pattern, getattr(self, field)):
                 raise ValueError(f"Invalid proof {field}.")
+        if self.model_id not in {_NOVA_PRO, _NOVA_2_LITE}:
+            raise ValueError("Invalid proof model_id.")
+        if self.model_id == _NOVA_2_LITE and (
+            self.region != "us-east-1" or not self.name.startswith("watershed_memory_current_")
+        ):
+            raise ValueError("Invalid proof Nova 2 Lite scope.")
+
+
+def _model_statements(spec: RuntimeSpec) -> list[dict]:
+    actions = ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"]
+    if spec.model_id == _NOVA_PRO:
+        return [{
+            "Sid": "BedrockModel", "Effect": "Allow", "Action": actions,
+            "Resource": [f"arn:aws:bedrock:{spec.region}::foundation-model/{spec.model_id}"],
+        }]
+    profile = (
+        f"arn:aws:bedrock:us-east-1:{spec.account}:"
+        f"inference-profile/{_NOVA_2_LITE}"
+    )
+    targets = [
+        f"arn:aws:bedrock:{region}::foundation-model/amazon.nova-2-lite-v1:0"
+        for region in _NOVA_2_TARGET_REGIONS
+    ]
+    return [
+        {
+            "Sid": "BedrockInferenceProfile", "Effect": "Allow", "Action": actions,
+            "Resource": [profile],
+        },
+        {
+            "Sid": "BedrockInferenceTargets", "Effect": "Allow", "Action": actions,
+            "Resource": targets,
+            "Condition": {"StringEquals": {"bedrock:InferenceProfileArn": profile}},
+        },
+    ]
 
 
 def build_plan(spec: RuntimeSpec) -> dict:
@@ -36,9 +74,7 @@ def build_plan(spec: RuntimeSpec) -> dict:
     logs = f"arn:aws:logs:{region}:{account}:log-group:/aws/bedrock-agentcore/runtimes/{name}-*"
     tags = {"Project": "watershed-memory", "Purpose": "bounded-feasibility"}
     statements = [
-        {"Sid": "BedrockModel", "Effect": "Allow",
-         "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
-         "Resource": [f"arn:aws:bedrock:{region}::foundation-model/{spec.model_id}"]},
+        *_model_statements(spec),
         {"Sid": "ReadArtifact", "Effect": "Allow", "Action": ["s3:GetObject"],
          "Resource": [f"arn:aws:s3:::{bucket}/{key}"]},
         {"Sid": "RuntimeLogs", "Effect": "Allow",

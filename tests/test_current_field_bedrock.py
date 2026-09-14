@@ -52,6 +52,29 @@ def test_fixed_production_profile_and_bounded_provider_configuration(constructor
     assert config.retries == {"max_attempts": 0}
 
 
+def test_nova_2_lite_enables_bounded_low_reasoning_without_changing_turn_guards(constructors):
+    calls, session, model = constructors
+    planner = bedrock_field_planner(
+        "us.amazon.nova-2-lite-v1:0", "us-east-1", aws_profile="watershed-memory"
+    )
+    assert planner.profile.model_id == "us.amazon.nova-2-lite-v1:0"
+    assert planner.scripted_test is False and planner.max_calls == 12 and planner.seconds == 120
+    assert planner.model is model and model.response_count == 0
+    assert calls[0] == (
+        "session", {"profile_name": "watershed-memory", "region_name": "us-east-1"}
+    )
+    settings = calls[1][1]
+    assert set(settings) == {
+        "model_id", "max_tokens", "temperature", "boto_session", "boto_client_config",
+        "additional_request_fields",
+    }
+    assert settings["boto_session"] is session
+    assert settings["max_tokens"] == 5000 and settings["temperature"] == 0
+    assert settings["additional_request_fields"] == {
+        "reasoningConfig": {"type": "enabled", "maxReasoningEffort": "low"}
+    }
+
+
 @pytest.mark.parametrize("change", [
     {"model_id": None}, {"model_id": ""}, {"model_id": "PRIVATE-CANARY\n"},
     {"model_id": "model with spaces"}, {"model_id": "a" * 201},
